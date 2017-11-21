@@ -31,7 +31,7 @@ set -x
     client_config=${nservers}_clients_in_kodiak
 
     #location specific config
-    cops_dir="/home/sachin/eiger"
+    cops_dir="$HOME/eiger"
     # vanilla_dir="/home/princeton_cops/cassandra-vanilla"
     # tools_dir="/home/princeton_cops/cassandra-vanilla"
     exp_dir="${cops_dir}/experiments"

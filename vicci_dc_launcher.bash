@@ -12,8 +12,8 @@ fi
 
 dcl_config=$1
 wait=wait
-cops_dir=/home/sachin/eiger
-var_dir=/home/sachin/eiger/cassandra_var
+cops_dir=$HOME/eiger
+var_dir=$cops_dir/cassandra_var
 
 
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')
