@@ -11,7 +11,7 @@ if [ $# -ne 1 ]; then
 fi
 
 dcl_config=$1
-
+cops_dir=$(pwd)
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')
 ips=($(grep cassandra_ips $dcl_config | awk -F "=" '{ print $2 }'))
 ips=($(echo "echo ${ips[@]}" | bash))
@@ -19,7 +19,7 @@ ips=($(echo "echo ${ips[@]}" | bash))
 #kill in parallel
 set -m #need monitor mode to fg processes
 for ip in ${ips[@]}; do
-    ssh -t -t -o StrictHostKeyChecking=no princeton_cops@$ip "/home/princeton_cops/cops2/kill_all_cassandra.bash" &
+    ssh -t -t -o StrictHostKeyChecking=no $ip "${cops_dir}/kill_all_cassandra.bash" &
 done
 
 for ip in ${ips[@]}; do

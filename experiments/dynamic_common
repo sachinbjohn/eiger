@@ -79,7 +79,7 @@
 
 	        #write to ALL so the cluster is populated everywhere
 	        ssh $client -o StrictHostKeyChecking=no "\
-mkdir -p ~/${dynamic_dir}/${exp_uid}; \
+mkdir -p $cops_dir/${dynamic_dir}/${exp_uid}; \
 $stress_killer; sleep 1; \
 cd ${src_dir}/tools/stress; \
 bin/stress \
@@ -94,8 +94,8 @@ bin/stress \
 --num-keys=$keys_per_client \
 --stress-index=$cli_index \
 --stress-count=$num_clients_per_dc \
- > >(tee ~/${dynamic_dir}/${exp_uid}/populate.out) \
-2> >(tee ~/${dynamic_dir}/${exp_uid}/populate.err) \
+ > >(tee $cops_dir/${dynamic_dir}/${exp_uid}/populate.out) \
+2> >(tee $cops_dir/${dynamic_dir}/${exp_uid}/populate.err) \
 " 2>&1 | awk '{ print "'$client': "$0 }' &
 	        pop_pid=$!
 	        pop_pids="$pop_pids $pop_pid"
@@ -154,7 +154,7 @@ bin/stress \
 	src_dir=${12}
 	cluster_type=${13}
 
-	cli_output_dir="~/${dynamic_dir}/${exp_uid}/${cluster_type}/trial${trial}"
+	cli_output_dir="$cops_dir/${dynamic_dir}/${exp_uid}/${cluster_type}/trial${trial}"
 	data_file_name=$1_$2_$3_$4_$5_$6_$7_$8_$9+${10}+data
 
 	#divide keys across all clients
@@ -210,7 +210,7 @@ sleep $((exp_time + 10)); ${src_dir}/kill_stress_vicci.bash" \
             for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
 		client_dir=${output_dir}/client${cli_index}
 		client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
-		rsync -az $client:${dynamic_dir}/${exp_uid}/* ${client_dir}
+		rsync -az $client:${cops_dir}/${dynamic_dir}/${exp_uid}/* ${client_dir}
 	    done
 	done
     }

@@ -21,43 +21,19 @@ fi
 set -x
 
 # Setup differs depending on where I launch this from
-machine_name=$(uname -n)
-if [ "$machine_name" == "wlloyds-macbook-pro.local" ]; then
-    # # Local MBP
-
-    # #!! server should be cmdline option
-    # server=localhost
-
-    # #location specific config
-    # cops_dir="/Users/wlloyd/Documents/widekv/cassandra2"
-    # kill_all_cmd="${cops_dir}/kill_all_cassandra.bash"
-    # stress_killer="${cops_dir}/experiments/kill_stress_local_mbp.bash"
-
-    # cluster_start_cmd() {
-    # 	cd ${cops_dir};
-    # 	./kill_all_cassandra.bash;
-    # 	sleep 1;
-    # 	./cassandra_dc_launcher.bash 1 1 wait;
-    # 	cd -;
-    # }
-    echo "todo"
-    exit
-elif [ "$machine_name" == "node2.princeton.vicci.org" ]; then
-    # VICCI, run from Princeton 1
-
     if [ $# -ne 1 ]; then
 	echo "$0: [# servers]"
 	exit
     fi
 
     nservers=$1
-    dcl_config=${nservers}_in_princeton
-    client_config=${nservers}_clients_in_princeton
+    dcl_config=${nservers}_in_kodiak
+    client_config=${nservers}_clients_in_kodiak
 
     #location specific config
-    cops_dir="/home/princeton_cops/cops2"
-    vanilla_dir="/home/princeton_cops/cassandra-vanilla"
-    tools_dir="/home/princeton_cops/cassandra-vanilla"
+    cops_dir="/home/sachin/eiger"
+    # vanilla_dir="/home/princeton_cops/cassandra-vanilla"
+    # tools_dir="/home/princeton_cops/cassandra-vanilla"
     exp_dir="${cops_dir}/experiments"
     stress_dir="${cops_dir}/tools/stress"
     output_dir_base="${exp_dir}/${dynamic_dir}"
@@ -77,15 +53,15 @@ elif [ "$machine_name" == "node2.princeton.vicci.org" ]; then
 
     strategy_properties="DC0:1"
     for i in $(seq 1 $((num_dcs-1))); do
-	strategy_properties=$(echo ${strategy_properties}",DC${i}:1")
+		strategy_properties=$(echo ${strategy_properties}",DC${i}:1")
     done
 
     num_servers=$(echo $all_servers | wc -w)
     num_servers_per_dc=$((num_servers / num_dcs))
     
     for dc in $(seq 0 $((num_dcs-1))); do
-	this_dc_servers=$(echo $all_servers | sed 's/ /\n/g' | head -n $((num_servers_per_dc * (dc+1))) | tail -n $num_servers_per_dc | xargs)
-	servers_by_dc[$dc]=${this_dc_servers}
+		this_dc_servers=$(echo $all_servers | sed 's/ /\n/g' | head -n $((num_servers_per_dc * (dc+1))) | tail -n $num_servers_per_dc | xargs)
+		servers_by_dc[$dc]=${this_dc_servers}
     done
     echo ${servers_by_dc[@]}
 
@@ -100,8 +76,8 @@ elif [ "$machine_name" == "node2.princeton.vicci.org" ]; then
     num_clients_per_dc=$((num_clients / num_dcs))
     
     for dc in $(seq 0 $((num_dcs-1))); do
-	this_dc_clients=$(echo $all_clients | sed 's/ /\n/g' | head -n $((num_clients_per_dc * (dc+1))) | tail -n $num_clients_per_dc | xargs)
-	clients_by_dc[$dc]=${this_dc_clients}
+		this_dc_clients=$(echo $all_clients | sed 's/ /\n/g' | head -n $((num_clients_per_dc * (dc+1))) | tail -n $num_clients_per_dc | xargs)
+		clients_by_dc[$dc]=${this_dc_clients}
     done
     echo ${clients_by_dc[@]}
 
@@ -111,12 +87,6 @@ elif [ "$machine_name" == "node2.princeton.vicci.org" ]; then
 
     
     source $exp_dir/dynamic_common
-
-
-else
-    echo "Unknown machine_name: ${machine_name}"
-    exit
-fi
 
 
 
@@ -135,41 +105,42 @@ source ${exp_dir}/dynamic_defaults
 run_time=60
 trim=15
 
-echo -e "STARTING $0 $@" >> ~/cops2/experiments/progress
+echo -e "STARTING $0 $@" >> ${cops_dir}/experiments/progress
 
 num_trials=1
 for trial in $(seq $num_trials); do
     #100K columns seems to break stuff
     #for sizeANDkeys in 1:3200000 10:3200000 100:3200000 1000:3200000 10000:320000 100000:32000; do
     #for cols_per_key_read in 1 2 4 5 8 16 32 64; do
-    for cpkrANDkeys in 8:100000 16:10000 32:10000 64:10000 1:1000000 2:100000 4:1000000 5:1000000; do
+    for cpkrANDkeys in 1:100000 ; do
+    # for cpkrANDkeys in 8:100000 16:10000 32:10000 64:10000 1:1000000 2:100000 4:1000000 5:1000000; do
 	cols_per_key_read=$(echo $cpkrANDkeys | awk -F":" '{ print $1 }')
 	total_keys=$(echo $cpkrANDkeys | awk -F":" '{ print $2 }')
 	variable=$cols_per_key_read
 
-	echo -e "Running $0\t$variable at $(date)" >> ~/cops2/experiments/progress
+	echo -e "Running $0\t$variable at $(date)" >> ${cops_dir}/experiments/progress
 
 
 	cops_cluster_start_cmd
 	cops_populate_cluster ${total_keys} ${cols_per_key_read} ${value_size} ${cols_per_key_write}
 
-        cops_run_experiment $total_keys $value_size $cols_per_key_read $cols_per_key_write $keys_per_read $keys_per_write $write_frac $write_trans_frac $run_time $variable $trial
+    cops_run_experiment $total_keys $value_size $cols_per_key_read $cols_per_key_write $keys_per_read $keys_per_write $write_frac $write_trans_frac $run_time $variable $trial
 
 	$kill_all_cmd
 
 
-	vanilla_cluster_start_cmd
-	vanilla_populate_cluster ${total_keys} ${cols_per_key_read} ${value_size} ${cols_per_key_write}
+	# vanilla_cluster_start_cmd
+	# vanilla_populate_cluster ${total_keys} ${cols_per_key_read} ${value_size} ${cols_per_key_write}
 
-	vanilla_run_experiment $total_keys $value_size $cols_per_key_read $cols_per_key_write $keys_per_read $keys_per_write $write_frac $write_trans_frac $run_time $variable $trial
+	# vanilla_run_experiment $total_keys $value_size $cols_per_key_read $cols_per_key_write $keys_per_read $keys_per_write $write_frac $write_trans_frac $run_time $variable $trial
 
-	$kill_all_cmd
+	# $kill_all_cmd
 
-	gather_results
+	 ###gather_results
     done
 done
 
-echo -e "FINISHED $0\tat $(date)" >> ~/cops2/experiments/progress
+echo -e "FINISHED $0\tat $(date)" >> ${cops_dir}/experiments/progress
 
 #######################################
 #
@@ -186,7 +157,7 @@ set -x
 #
 #######################################
 cd $exp_dir
-./dynamic_postprocess_full.bash . ${output_dir} ${run_time} ${trim} shuffle
+###./dynamic_postprocess_full.bash . ${output_dir} ${run_time} ${trim} shuffle
 
 
 

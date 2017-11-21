@@ -12,6 +12,9 @@ fi
 
 dcl_config=$1
 wait=wait
+cops_dir=/home/sachin/eiger
+var_dir=/home/sachin/eiger/cassandra_var
+
 
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')
 ips=($(grep cassandra_ips $dcl_config | awk -F "=" '{ print $2 }'))
@@ -32,21 +35,19 @@ fi
 #clean up all nodes in parallel
 for ip in ${ips[@]}; do
     (ssh -t -t -o StrictHostKeyChecking=no $ip "\
-~/cops2/kill_all_cassandra.bash;\
-rm ~/cops2/*hprof 2> /dev/null;\
-rm ~/cassandra-vanilla/*hprof 2> /dev/null;\
-rm /local/cassandra_var/cassandra*log 2> /dev/null;\
-rm /local/cassandra_var/cassandra*log* 2> /dev/null;\
-rm -rf /local/cassandra_var/data/* 2> /dev/null;\
-rm -rf /local/cassandra_var/commitlog/* 2> /dev/null;\
-rm -rf /local/cassandra_var/saved_caches/* 2> /dev/null;\
-rm -rf /local/cassandra_var/stdout/* 2> /dev/null;\
-sudo mkdir /local/cassandra_var 2> /dev/null;\
-sudo chown wlloyd /local/cassandra_var 2> /dev/null;\
-mkdir /local/cassandra_var/data 2> /dev/null;\
-mkdir /local/cassandra_var/commitlog 2> /dev/null;\
-mkdir /local/cassandra_var/saved_caches 2> /dev/null;\
-mkdir /local/cassandra_var/stdout 2> /dev/null;\
+${cops_dir}/kill_all_cassandra.bash;\
+rm ${cops_dir}/*hprof 2> /dev/null;\
+rm ${var_dir}/cassandra*log 2> /dev/null;\
+rm ${var_dir}/cassandra*log* 2> /dev/null;\
+rm -rf ${var_dir}/data/* 2> /dev/null;\
+rm -rf ${var_dir}/commitlog/* 2> /dev/null;\
+rm -rf ${var_dir}/saved_caches/* 2> /dev/null;\
+rm -rf ${var_dir}/stdout/* 2> /dev/null;\
+mkdir ${var_dir} 2> /dev/null;\
+mkdir ${var_dir}/data 2> /dev/null;\
+mkdir ${var_dir}/commitlog 2> /dev/null;\
+mkdir ${var_dir}/saved_caches 2> /dev/null;\
+mkdir ${var_dir}/stdout 2> /dev/null;\
 " 2>&1 | awk '{ print "'$ip': "$0 }' ) &
 done
 
@@ -58,7 +59,7 @@ set +m
 
 #create the topo file, we must eventually write this to conf/cassandra-topology.properties
 #because that location is hardcoded into cassandra
-topo_file=conf/vicci/cassandra-topology.properties
+topo_file=${cops_dir}/conf/vicci/cassandra-topology.properties
 echo -n "" > $topo_file
 for dc in $(seq 0 $((num_dcs - 1))); do
     for n in $(seq 0 $((nodes_per_dc - 1))); do
@@ -93,26 +94,27 @@ for dc in $(seq 0 $((num_dcs - 1))); do
 	    | sed 's/LISTEN_ADDRESS/'$local_ip'/g' \
             | sed 's/RPC_ADDRESS/'$local_ip'/g' \
             | sed 's/SEEDS/'"$seeds"'/g' \
-            > conf/vicci/$conf_file
+            | sed 's,VAR_DIR,'$var_dir',g' \
+            > ${cops_dir}/conf/vicci/$conf_file
         
 	#| sed 's/NODE_NUM/'$global_node_num'/g' \
 
-        sed 's/LOG_FILE/\/local\/cassandra_var\/cassandra_system.'$global_node_num'.log/g' conf/log4j-server_BASE.properties > conf/vicci/$log4j_file
+        sed 's+LOG_FILE+'$var_dir'/cassandra_system.'$global_node_num'.log+g' ${cops_dir}/conf/log4j-server_BASE.properties > ${cops_dir}/conf/vicci/$log4j_file
 
         #set -x
 	#copy over conf files
 	(
-	scp -o StrictHostKeyChecking=no ${topo_file} ${local_ip}:~/cops2/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no conf/vicci/${conf_file} ${local_ip}:~/cops2/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no conf/vicci/${log4j_file} ${local_ip}:~/cops2/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no ${topo_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no ${cops_dir}/conf/vicci/${conf_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no ${cops_dir}/conf/vicci/${log4j_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
 
         #put this in ssh commands to modify JVM options
         #export JVM_OPTS="-Xms32M -Xmn64M"
 
 	while [ 1 ]; do
             ssh_output=$(ssh -o StrictHostKeyChecking=no $local_ip "\
-cd ~/cops2;\
-~/cops2/bin/cassandra -Dcassandra.config=${conf_file} -Dlog4j.configuration=${log4j_file} > /local/cassandra_var/stdout/${dc}_${n}.out;\
+cd ${cops_dir};\
+ CASSANDRA_INCLUDE=bin/cassandra.in.sh bin/cassandra -Dcassandra.config=file:///${cops_dir}/conf/${conf_file} -Dlog4j.configuration=${log4j_file} > ${var_dir}/stdout/${dc}_${n}.out;\
 " 2>&1)
 	    failure=$(echo $ssh_output | grep "error while loading shared libraries")
 	    if [ "$failure" == "" ]; then
@@ -136,7 +138,7 @@ if [ "$wait" != "" ]; then
     while [ "${normal_nodes}" -ne "${total_nodes}" ]; do
         sleep 5
         normal_nodes=$(ssh -o StrictHostKeyChecking=no ${ips[0]} \
-	    '~/cops2/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l')
+	    'CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l')
         echo "  "$normal_nodes
 	wait_time=$((wait_time+5))
 	if [[ $wait_time -ge 60 ]]; then
