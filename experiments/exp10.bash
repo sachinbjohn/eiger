@@ -254,7 +254,6 @@ do
                         run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
                         $kill_all_cmd
                         gather_results
-                        kill
                     done
                 done
             done
