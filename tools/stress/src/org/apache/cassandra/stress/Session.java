@@ -193,7 +193,7 @@ public class Session implements Serializable
     private int servers_per_txn = 0;
 
     private int server_index = -1;
-    public static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
+    private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
 
     private double zipfian_constant = 0.99;
 
@@ -544,7 +544,6 @@ public class Session implements Serializable
             numDifferentKeys = keys_per_server * num_servers;
             servers_per_txn = keys_per_read;
             assert servers_per_txn <= num_servers;
-            generateKeysForEachServer(num_servers,numDifferentKeys);
             read_latencies = new ConcurrentLinkedQueue<>();
             write_latencies = new ConcurrentLinkedQueue<>();
         } else
