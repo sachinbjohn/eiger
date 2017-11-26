@@ -19,7 +19,7 @@ cops_dir="$HOME/eiger"
 exp_dir="${cops_dir}/experiments"
 stress_dir="${cops_dir}/tools/stress"
 
-output_dir_base="${exp_dir}/exp10/"
+output_dir_base="${exp_dir}/exp10"
 exp_uid=$(date +%s)
 output_dir="${output_dir_base}/${exp_uid}"
 mkdir -p ${output_dir}
@@ -213,7 +213,7 @@ run_exp10() {
             --keys-per-read=$keys_per_read \
             --write-fraction=$write_frac \
             --threads=$num_threads \
-            --zipfian_constant=$zipf_const \
+            --zipfian-constant=$zipf_const \
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
