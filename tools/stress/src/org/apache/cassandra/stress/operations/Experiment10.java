@@ -89,7 +89,7 @@ public class Experiment10 extends Operation {
             int numServ = session.getNum_servers();
             int keyPerServ = numKeys / numServ;
             zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
-            generateKeysForEachServer(numKeys, numKeys);
+            generateKeysForEachServer(numServ, numKeys);
         }
         int index = zipfGen.nextValue().intValue();
         ArrayList<ByteBuffer> list = generatedKeysByServer.get(srvIndex);
