@@ -23,6 +23,13 @@ public class Experiment10 extends Operation {
     private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
     public Experiment10(Session session, int index) {
         super(session, index);
+        if (zipfGen == null) {
+            int numKeys = session.getNumDifferentKeys();
+            int numServ = session.getNum_servers();
+            int keyPerServ = numKeys / numServ;
+            zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
+            generateKeysForEachServer(numServ, numKeys);
+        }
     }
 
     private List<ByteBuffer> generateReadTxnKeys(int numTotalServers, int numInvolvedServers, int keysPerServer) {
@@ -84,13 +91,7 @@ public class Experiment10 extends Operation {
 
 
     private  ByteBuffer getZipfGeneratedKey(int srvIndex) {
-        if (zipfGen == null) {
-            int numKeys = session.getNumDifferentKeys();
-            int numServ = session.getNum_servers();
-            int keyPerServ = numKeys / numServ;
-            zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
-            generateKeysForEachServer(numServ, numKeys);
-        }
+
         int index = zipfGen.nextValue().intValue();
         ArrayList<ByteBuffer> list = generatedKeysByServer.get(srvIndex);
         if (index >= list.size())

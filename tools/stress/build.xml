@@ -35,7 +35,7 @@
     </target>
 
     <target depends="init" name="build">
-        <javac destdir="${build.classes}">
+        <javac debug="true" debuglevel="source,lines,vars" destdir="${build.classes}">
             <src path="${build.src}" />
             <classpath>
                 <path refid="cassandra.classes" />
