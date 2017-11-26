@@ -14,20 +14,17 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.yahoo.ycsb.generator.ZipfianGenerator;
-import static com.google.common.base.Charsets.UTF_8;
 
 public class Experiment10 extends Operation {
 
     private static ZipfianGenerator zipfGen;
     private static ByteBuffer value;
-    private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
     public Experiment10(Session session, int index) {
         super(session, index);
         if (zipfGen == null) {
             int numKeys = session.getNumDifferentKeys();
             int numServ = session.getNum_servers();
             int keyPerServ = numKeys / numServ;
-            generateKeysForEachServer(numServ, numKeys);
             zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
         }
     }
@@ -61,39 +58,11 @@ public class Experiment10 extends Operation {
         return ByteBuffer.wrap(valueArray);
     }
 
-    private void generateKeysForEachServer(int numServers, int totalNumKeys)
-    {
-        int keysPerServer = totalNumKeys/numServers;
-
-        generatedKeysByServer = new ArrayList<ArrayList<ByteBuffer>>(numServers);
-        for (int i = 0; i < numServers; i++)
-        {
-            generatedKeysByServer.add(new ArrayList<ByteBuffer>(keysPerServer));
-        }
-
-        // Assuming we're using the random partitioner, which we are.
-        // We need to generate keys for servers by randomly generating keys
-        // and then matching them to whatever their md5 maps to.
-        boolean allServersFull;
-        Random randomizer = new Random();
-        for(long keynum = 0; keynum < totalNumKeys; ++keynum) {
-            String keyStr = String.format("%0" + (session.getTotalKeysLength()) + "d", keynum);
-            ByteBuffer key = ByteBuffer.wrap(keyStr.getBytes(UTF_8));
-            double hashedKey = FBUtilities.hashToBigInteger(key).doubleValue();
-
-            //Cassandra's keyspace is [0, 2**127)
-            double keyrangeSize = Math.pow(2, 127) / numServers;
-            int serverIndex = (int) (hashedKey / keyrangeSize);
-            generatedKeysByServer.get(serverIndex).add(key);
-
-        }
-    }
-
 
     private  ByteBuffer getZipfGeneratedKey(int srvIndex) {
 
         int index = zipfGen.nextValue().intValue();
-        ArrayList<ByteBuffer> list = generatedKeysByServer.get(srvIndex);
+        ArrayList<ByteBuffer> list = session.generatedKeysByServer.get(srvIndex);
         if (index >= list.size())
             return list.get(list.size() - 1);
         else

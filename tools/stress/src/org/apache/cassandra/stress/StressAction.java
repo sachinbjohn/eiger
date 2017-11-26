@@ -193,6 +193,12 @@ public class StressAction extends Thread {
 
 
                 Long[] readlatencies = readlatenciesSet.toArray(new Long[0]);
+
+                if (readlatencies.length == 0) {
+                    // We aren't recording latencies for this op type probably
+                    System.err.println("No Read Latencies percentiles to print");
+                    return;
+                }
                 System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
                         percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
                         percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
@@ -212,6 +218,13 @@ public class StressAction extends Thread {
                 writelatenciesSet.addAll(writelatenciesDeque);
 
                 Long[] writelatencies = writelatenciesSet.toArray(new Long[0]);
+
+                if (writelatencies.length == 0) {
+                    // We aren't recording latencies for this op type probably
+                    System.err.println("No Write Latencies percentiles to print");
+                    return;
+                }
+
                 System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
                         percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
                         percentile(writelatencies, 99), percentile(writelatencies, 99.9)));

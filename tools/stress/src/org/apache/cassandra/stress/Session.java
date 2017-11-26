@@ -193,7 +193,7 @@ public class Session implements Serializable
     private int servers_per_txn = 0;
 
     private int server_index = -1;
-    private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
+    public static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
 
     private double zipfian_constant = 0.99;
 
@@ -544,8 +544,10 @@ public class Session implements Serializable
             numDifferentKeys = keys_per_server * num_servers;
             servers_per_txn = keys_per_read;
             assert servers_per_txn <= num_servers;
+            generateLinearKeysForEachServer(num_servers, numDifferentKeys);
             read_latencies = new ConcurrentLinkedQueue<>();
-            write_latencies = new ConcurrentLinkedQueue<>();
+            write_latencies = new ConcurrentLinkedQueue<>()
+            ;
         } else
             read_latencies = write_latencies = null;
         for (String node : nodes) {
@@ -872,6 +874,35 @@ public class Session implements Serializable
     {
         int serverKeyCount = generatedKeysByServer.get(serverNum).size();
         return generatedKeysByServer.get(serverNum).get(Stress.randomizer.nextInt(serverKeyCount));
+    }
+
+
+    public void generateLinearKeysForEachServer(int numServers, int totalNumKeys)
+    {
+        int keysPerServer = totalNumKeys/numServers;
+
+        generatedKeysByServer = new ArrayList<ArrayList<ByteBuffer>>(numServers);
+        for (int i = 0; i < numServers; i++)
+        {
+            generatedKeysByServer.add(new ArrayList<ByteBuffer>(keysPerServer));
+        }
+
+        // Assuming we're using the random partitioner, which we are.
+        // We need to generate keys for servers by randomly generating keys
+        // and then matching them to whatever their md5 maps to.
+        boolean allServersFull;
+        Random randomizer = new Random();
+        for(long keynum = 0; keynum < totalNumKeys; ++keynum) {
+            String keyStr = String.format("%0" + (getTotalKeysLength()) + "d", keynum);
+            ByteBuffer key = ByteBuffer.wrap(keyStr.getBytes(UTF_8));
+            double hashedKey = FBUtilities.hashToBigInteger(key).doubleValue();
+
+            //Cassandra's keyspace is [0, 2**127)
+            double keyrangeSize = Math.pow(2, 127) / numServers;
+            int serverIndex = (int) (hashedKey / keyrangeSize);
+            generatedKeysByServer.get(serverIndex).add(key);
+
+        }
     }
 
     private void generateKeysForEachServer(int numServers, int totalNumKeys)
