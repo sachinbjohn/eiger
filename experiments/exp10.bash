@@ -213,7 +213,7 @@ run_exp10() {
             --keys-per-read=$keys_per_read \
             --write-fraction=$write_frac \
             --threads=$num_threads \
-            --zifpian_constant=$zipf_const \
+            --zipfian_constant=$zipf_const \
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
