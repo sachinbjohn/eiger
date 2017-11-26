@@ -223,6 +223,16 @@ run_exp10() {
     done
 }
 
+gather_results() {
+    for dc in 0; do
+        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
+            client_dir=${output_dir}/client${cli_index}
+            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
+            rsync -az $client:$output_dir/* ${client_dir}
+        done
+    done
+}
+
 
 internal_cluster_start_cmd $cops_dir
 keys_per_server=1000000
@@ -242,6 +252,9 @@ do
                     for numT in 32
                     do
                         run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
+                        $kill_all_cmd
+                        gather_results
+                        kill
                     done
                 done
             done

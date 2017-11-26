@@ -135,8 +135,7 @@ for trial in $(seq $num_trials); do
 	# vanilla_run_experiment $total_keys $value_size $cols_per_key_read $cols_per_key_write $keys_per_read $keys_per_write $write_frac $write_trans_frac $run_time $variable $trial
 
 	# $kill_all_cmd
-
-	 ###gather_results
+    gather_results
     done
 done
 
