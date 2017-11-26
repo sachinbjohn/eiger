@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,8 +30,7 @@ import org.apache.cassandra.stress.operations.*;
 import org.apache.cassandra.stress.util.Operation;
 import org.apache.cassandra.thrift.Cassandra;
 
-public class StressAction extends Thread
-{
+public class StressAction extends Thread {
     /**
      * Producer-Consumer model: 1 producer, N consumers
      */
@@ -43,16 +42,14 @@ public class StressAction extends Thread
 
     private volatile boolean stop = false;
 
-    public StressAction(Session session, PrintStream out, ClientContext clientContext)
-    {
+    public StressAction(Session session, PrintStream out, ClientContext clientContext) {
         client = session;
         output = out;
         this.clientContext = clientContext;
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         long latency, oldLatency;
         int epoch, total, oldTotal, keyCount, oldKeyCount;
         int columnCount, oldColumnCount;
@@ -94,17 +91,15 @@ public class StressAction extends Thread
         int epochIntervals = client.getProgressInterval() * 10;
         long testStartTime = System.currentTimeMillis();
 
-	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-	    @Override
-		public void run() {
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
                 printLatencyPercentiles();
             }
-	    }));
+        }));
 
-        while (!terminate)
-        {
-            if (stop)
-            {
+        while (!terminate) {
+            if (stop) {
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -113,12 +108,9 @@ public class StressAction extends Thread
                 break;
             }
 
-            try
-            {
+            try {
                 Thread.sleep(100);
-            }
-            catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
@@ -131,8 +123,7 @@ public class StressAction extends Thread
 
             epoch++;
 
-            if (terminate || epoch > epochIntervals)
-            {
+            if (terminate || epoch > epochIntervals) {
                 epoch = 0;
 
                 oldTotal = total;
@@ -157,7 +148,7 @@ public class StressAction extends Thread
                 long currentTimeInSeconds = (System.currentTimeMillis() - testStartTime) / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
-                output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval , formattedDelta, currentTimeInSeconds));
+                output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
 
@@ -165,34 +156,80 @@ public class StressAction extends Thread
         output.println("END");
     }
 
-    private Long percentile(Long[] array, double percentile)
-    {
+    private Long percentile(Long[] array, double percentile) {
         return array[(int) (array.length * (percentile / 100))];
 
     }
 
-    private void printLatencyPercentiles()
-    {
-	// Trim away the latencies from the start and end of the trial
-	// we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
-	ArrayDeque<Long> latenciesDeque = new ArrayDeque<Long>();
-	latenciesDeque.addAll(client.latencies);
-	int trimLen = latenciesDeque.size() / 4;
-	for (int ii = 0; ii < trimLen; ii++) {
-	    latenciesDeque.removeFirst();
-	    latenciesDeque.removeLast();
-	}
+    private void printLatencyPercentiles() {
+        // Trim away the latencies from the start and end of the trial
+        // we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
 
-	// Sort the latencies so we can find percentiles
-	SortedSet<Long> latenciesSet = new TreeSet<Long>();
-	latenciesSet.addAll(latenciesDeque);
-	Long[] latencies = latenciesSet.toArray(new Long[0]);
+        ArrayDeque<Long> latenciesDeque = new ArrayDeque<Long>();
+        latenciesDeque.addAll(client.latencies);
+        int trimLen = latenciesDeque.size() / 4;
+        for (int ii = 0; ii < trimLen; ii++) {
+            latenciesDeque.removeFirst();
+            latenciesDeque.removeLast();
+        }
 
-	if (latencies.length == 0) {
-	    // We aren't recording latencies for this op type probably
-	    System.err.println("No Latencies percentiles to print");
-	    return;
-	}
+        // Sort the latencies so we can find percentiles
+        SortedSet<Long> latenciesSet = new TreeSet<Long>();
+        latenciesSet.addAll(latenciesDeque);
+
+        if (client.read_latencies != null && client.write_latencies != null) {
+
+            {
+                //Read
+                ArrayDeque<Long> readlatenciesDeque = new ArrayDeque<Long>();
+                readlatenciesDeque.addAll(client.latencies);
+                int RtrimLen = readlatenciesDeque.size() / 4;
+                for (int ii = 0; ii < RtrimLen; ii++) {
+                    readlatenciesDeque.removeFirst();
+                    readlatenciesDeque.removeLast();
+                }
+                SortedSet<Long> readlatenciesSet = new TreeSet<Long>();
+                readlatenciesSet.addAll(readlatenciesDeque);
+
+
+                Long[] readlatencies = readlatenciesSet.toArray(new Long[0]);
+                System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+                        percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
+                        percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
+            }
+            {
+                //Write
+                ArrayDeque<Long> writelatenciesDeque = new ArrayDeque<Long>();
+                writelatenciesDeque.addAll(client.latencies);
+                int WtrimLen = writelatenciesDeque.size() / 4;
+                for (int ii = 0; ii < WtrimLen; ii++) {
+                    writelatenciesDeque.removeFirst();
+                    writelatenciesDeque.removeLast();
+                }
+
+
+                SortedSet<Long> writelatenciesSet = new TreeSet<Long>();
+                writelatenciesSet.addAll(writelatenciesDeque);
+
+                Long[] writelatencies = writelatenciesSet.toArray(new Long[0]);
+                System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+                        percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
+                        percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
+            }
+
+//            latenciesSet.addAll(readlatenciesDeque);
+//            latenciesSet.addAll(writelatenciesDeque);
+            return;
+        }
+
+
+        Long[] latencies = latenciesSet.toArray(new Long[0]);
+
+        if (latencies.length == 0) {
+            // We aren't recording latencies for this op type probably
+            System.err.println("No Latencies percentiles to print");
+            return;
+        }
 
         System.err.println(String.format("Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
                 percentile(latencies, 50), percentile(latencies, 90), percentile(latencies, 95),
@@ -202,32 +239,25 @@ public class StressAction extends Thread
     /**
      * Produces exactly N items (awaits each to be consumed)
      */
-    private class Producer extends Thread
-    {
+    private class Producer extends Thread {
         private volatile boolean stop = false;
 
         @Override
-        public void run()
-        {
-            for (int i = 0; i < client.getNumKeys(); i++)
-            {
+        public void run() {
+            for (int i = 0; i < client.getNumKeys(); i++) {
                 if (stop)
                     break;
 
-                try
-                {
+                try {
                     operations.put(createOperation((i % client.getNumDifferentKeys()) + client.getKeysOffset()));
-                }
-                catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     System.err.println("Producer error - " + e.getMessage());
                     return;
                 }
             }
         }
 
-        public void stopProducer()
-        {
+        public void stopProducer() {
             stop = true;
         }
     }
@@ -235,19 +265,16 @@ public class StressAction extends Thread
     /**
      * Each consumes exactly N items from queue
      */
-    private class Consumer extends Thread
-    {
+    private class Consumer extends Thread {
         private final int items;
         private volatile boolean stop = false;
 
-        public Consumer(int toConsume)
-        {
+        public Consumer(int toConsume) {
             items = toConsume;
         }
 
         @Override
-        public void run()
-        {
+        public void run() {
             if (client.getOperation() == Stress.Operations.DYNAMIC ||
                     client.getOperation() == Stress.Operations.INSERTCL ||
                     client.getOperation() == Stress.Operations.FACEBOOK ||
@@ -255,74 +282,59 @@ public class StressAction extends Thread
                     client.getOperation() == Stress.Operations.WRITE_TXN ||
                     client.getOperation() == Stress.Operations.BATCH_MUTATE ||
                     client.getOperation() == Stress.Operations.TWO_ROUND_READ_TXN ||
-                    client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER)
-            {
+                    client.getOperation() == Stress.Operations.DYNAMIC_ONE_SERVER ||
+                    client.getOperation() == Stress.Operations.EXP10) {
                 ClientLibrary library = client.getClientLibrary();
 
-                for (int i = 0; i < items; i++)
-                {
+                for (int i = 0; i < items; i++) {
                     if (stop)
                         break;
 
-                    try
-                    {
+                    try {
                         operations.take().run(library); // running job
-                    }
-		    catch (Exception e)
-		    {
-			if (output == null)
-		        {
-			    System.err.println(e.getMessage());
-			    e.printStackTrace();
-			    System.exit(-1);
-			}
-			output.println(e.getMessage());
-			e.printStackTrace();
-			break;
+                    } catch (Exception e) {
+                        if (output == null) {
+                            System.err.println(e.getMessage());
+                            e.printStackTrace();
+                            System.exit(-1);
+                        }
+                        output.println(e.getMessage());
+                        e.printStackTrace();
+                        break;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 Cassandra.Client connection = client.getClient();
 
-                for (int i = 0; i < items; i++)
-                {
+                for (int i = 0; i < items; i++) {
                     if (stop)
                         break;
 
-                    try
-                    {
+                    try {
                         operations.take().run(connection); // running job
-                    }
-                    catch (Exception e)
-                    {
-                        if (output == null)
-                        {
+                    } catch (Exception e) {
+                        if (output == null) {
                             System.err.println(e.getMessage());
-			    e.printStackTrace();
+                            e.printStackTrace();
                             System.exit(-1);
                         }
 
 
                         output.println(e.getMessage());
-			e.printStackTrace();
+                        e.printStackTrace();
                         break;
                     }
                 }
             }
         }
 
-        public void stopConsume()
-        {
+        public void stopConsume() {
             stop = true;
         }
     }
 
-    private Operation createOperation(int index)
-    {
-        switch (client.getOperation())
-        {
+    private Operation createOperation(int index) {
+        switch (client.getOperation()) {
             case READ:
                 return client.isCQL() ? new CqlReader(client, index) : new Reader(client, index, clientContext);
 
@@ -357,10 +369,14 @@ public class StressAction extends Thread
             case INSERTCL:
                 return client.isCQL() ? new CqlInserter(client, index) : new Inserter(client, index);
 
+            case EXP10:
+                if (client.isCQL())
+                    throw new RuntimeException("CQL is not supported with Exp10 workload");
+                return new Experiment10(client, index);
 
-	    case WRITE_TXN:
-		if (client.isCQL())
-		    throw new RuntimeException("CQL not support with write txn workload");
+            case WRITE_TXN:
+                if (client.isCQL())
+                    throw new RuntimeException("CQL not support with write txn workload");
                 return new WriteTransactionWorkload(client, index, true);
 
             case BATCH_MUTATE:
@@ -373,22 +389,21 @@ public class StressAction extends Thread
                     throw new RuntimeException("CQL not support with this workload");
                 return new TwoRoundReadTxn(client, index);
 
-	    case FACEBOOK_POPULATE:
-		if (client.isCQL())
+            case FACEBOOK_POPULATE:
+                if (client.isCQL())
                     throw new RuntimeException("CQL not support with this workload");
-		return new FacebookPopulator(client, index);
+                return new FacebookPopulator(client, index);
 
-	    case FACEBOOK:
-		if (client.isCQL())
+            case FACEBOOK:
+                if (client.isCQL())
                     throw new RuntimeException("CQL not support with this workload");
-		return new FacebookWorkload(client, index);
+                return new FacebookWorkload(client, index);
         }
 
         throw new UnsupportedOperationException();
     }
 
-    public void stopAction()
-    {
+    public void stopAction() {
         stop = true;
     }
 }

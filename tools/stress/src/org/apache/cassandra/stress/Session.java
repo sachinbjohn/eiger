@@ -60,6 +60,8 @@ public class Session implements Serializable
     public final AtomicLong    bytes;
     public final AtomicLong    latency;
     public final ConcurrentLinkedQueue<Long> latencies;
+    public final ConcurrentLinkedQueue<Long> read_latencies;
+    public final ConcurrentLinkedQueue<Long> write_latencies;
 
     static
     {
@@ -118,6 +120,7 @@ public class Session implements Serializable
         availableOptions.addOption("",  "servers-per-txn",         true,   "The number of servers to include in each write txn");
 
         availableOptions.addOption("",  "server-index",         true,   "Index of the server (out of num-servers) to load for DYNAMIC_ONE_SERVER");
+        availableOptions.addOption("",  "zipfian-constant",         true,   "Parameter for zipfian distribution for generating keys, required for Experiment10");
     }
 
     private int numKeys          = 1000 * 1000;
@@ -190,8 +193,9 @@ public class Session implements Serializable
     private int servers_per_txn = 0;
 
     private int server_index = -1;
-    private static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
+    public static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
 
+    private double zipfian_constant = 0.99;
 
     public Session(String[] arguments) throws IllegalArgumentException
     {
@@ -493,6 +497,11 @@ public class Session implements Serializable
                 if (server_index < 0)
                     throw new RuntimeException("Invalid server-index value");
             }
+            if(cmd.hasOption("zipfian-constant")) {
+                zipfian_constant = Double.parseDouble(cmd.getOptionValue("zipfian-constant"));
+                if(zipfian_constant < 0 || zipfian_constant > 1)
+                    throw new RuntimeException("Invalid zipfian parameter");
+            }
         }
         catch (ParseException e)
         {
@@ -528,6 +537,18 @@ public class Session implements Serializable
             generateKeysForEachServer(num_servers, numDifferentKeys);
         }
 
+        if(operation == Stress.Operations.EXP10) {
+            if (! (write_fraction >= 0 && keys_per_read != 0 && num_servers >= 0 && keys_per_server >= 0 && columnSize != 34)) {
+                throw new RuntimeException("All Exp10 options must be set");
+            }
+            numDifferentKeys = keys_per_server * num_servers;
+            servers_per_txn = keys_per_read;
+            assert servers_per_txn <= num_servers;
+            generateKeysForEachServer(num_servers,numDifferentKeys);
+            read_latencies = new ConcurrentLinkedQueue<>();
+            write_latencies = new ConcurrentLinkedQueue<>();
+        } else
+            read_latencies = write_latencies = null;
         for (String node : nodes) {
             localServerIPAndPorts.put(node, 9160);
         }
@@ -612,7 +633,7 @@ public class Session implements Serializable
     public int getTotalKeysLength()
     {
         //return Integer.toString(numDifferentKeys*stressCount).length();
-	return 10;
+	return 8;
     }
 
     public int getNumTotalKeys()
@@ -739,6 +760,9 @@ public class Session implements Serializable
         assert server_index != -1;
         return server_index;
     }
+
+    public double getZipfianConstant() { return zipfian_constant; }
+
 
     /**
      * Create Keyspace1 with Standard1 and Super1 column families
