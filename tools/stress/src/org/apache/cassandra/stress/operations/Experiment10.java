@@ -27,8 +27,8 @@ public class Experiment10 extends Operation {
             int numKeys = session.getNumDifferentKeys();
             int numServ = session.getNum_servers();
             int keyPerServ = numKeys / numServ;
-            zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
             generateKeysForEachServer(numServ, numKeys);
+            zipfGen = new ZipfianGenerator(keyPerServ, session.getZipfianConstant());
         }
     }
 
@@ -108,7 +108,7 @@ public class Experiment10 extends Operation {
     @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
         //do all random tosses here
-
+        while(zipfGen == null); // wait until initialization is over
         double target_p_w = session.getWrite_fraction();
         int partitionsToReadFrom = session.getKeys_per_read();
         assert partitionsToReadFrom <= session.getNum_servers();
