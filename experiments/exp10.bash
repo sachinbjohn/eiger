@@ -221,6 +221,8 @@ run_exp10() {
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
+    #wait for clients to finish
+    wait
 }
 
 gather_results() {

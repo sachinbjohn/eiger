@@ -118,7 +118,7 @@ public class Experiment10 extends Operation {
             try {
                 columnCount = 0;
                 results = clientLibrary.transactional_multiget_slice(keys, parent, nColumnsPredicate);
-                success = (results.size() > 0);
+                success = (results.size() == keys.size());
                 if (!success)
                     exceptionMessage = "Wrong number of keys: " + results.size() + " instead of " + involvedServers;
 
