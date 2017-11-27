@@ -240,7 +240,7 @@ gather_results() {
 
 internal_cluster_start_cmd $cops_dir
 keys_per_server=1000000
-total_keys=$((keys_per_server*nservers))
+total_keys=$((keys_per_server*num_servers))
 run_time=60
 for trial in 1
 do
