@@ -151,7 +151,7 @@ public class StressAction extends Thread {
                 output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
-        client.exptDurationMs = (int)(System.currentTimeMillis() - testStartTime);
+        client.exptDurationMs = (System.currentTimeMillis() - testStartTime);
 
         // marking an end of the output to the client
         output.println("END");
@@ -254,7 +254,7 @@ public class StressAction extends Thread {
         int numReads = client.readlatencies.size();
         int numWrites = client.writelatencies.size();;
 
-        String header = String.format("Eiger,%d,%d,%d,%d,%f,%f,%d,Client%d",client.getKeys_per_server(),client.getNum_servers(),client.getColumnSize(),client.getKeys_per_read(),client.getWrite_fraction(),client.getZipfianConstant(),client.getThreads(),client.stressIndex);
+        String header = String.format("Eiger,%d,%d,%d,%d,%f,%f,%d,Client%d,",client.getKeys_per_server(),client.getNum_servers(),client.getColumnSize(),client.getKeys_per_read(),client.getWrite_fraction(),client.getZipfianConstant(),client.getThreads(),client.stressIndex);
         System.err.println(header+"NumOps,"+numOps);
         System.err.println(header+"NumKeys,"+numKeys);
         System.err.println(header+"NumColumns,"+numColumns);

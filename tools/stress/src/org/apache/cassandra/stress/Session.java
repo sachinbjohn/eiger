@@ -62,7 +62,7 @@ public class Session implements Serializable
     public final ConcurrentLinkedQueue<Long> latencies;
     public final ConcurrentLinkedQueue<Long> readlatencies;
     public final ConcurrentLinkedQueue<Long> writelatencies;
-    public int exptDurationMs;
+    public long exptDurationMs;
     static
     {
         availableOptions.addOption("h",  "help",                 false,  "Show this help message and exit");
