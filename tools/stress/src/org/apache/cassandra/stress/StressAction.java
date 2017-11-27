@@ -152,7 +152,7 @@ public class StressAction extends Thread {
             }
         }
         client.exptDurationMs = (System.currentTimeMillis() - testStartTime);
-
+        output.println("Duration = "+client.exptDurationMs);
         // marking an end of the output to the client
         output.println("END");
     }
@@ -252,7 +252,8 @@ public class StressAction extends Thread {
         int numColumns = client.columnCount.get();
         long numBytes = client.bytes.get();
         int numReads = client.readlatencies.size();
-        int numWrites = client.writelatencies.size();;
+        int numWrites = client.writelatencies.size();
+        long duration = client.exptDurationMs;
 
         String header = String.format("Eiger,%d,%d,%d,%d,%f,%f,%d,Client%d,",client.getKeys_per_server(),client.getNum_servers(),client.getColumnSize(),client.getKeys_per_read(),client.getWrite_fraction(),client.getZipfianConstant(),client.getThreads(),client.stressIndex);
         System.err.println(header+"NumOps,"+numOps);
@@ -261,7 +262,7 @@ public class StressAction extends Thread {
         System.err.println(header+"NumBytes,"+numBytes);
         System.err.println(header+"NumReads,"+numReads);
         System.err.println(header+"NumWrites,"+numWrites);
-        System.err.println(header+"Duration,"+client.exptDurationMs);
+        System.err.println(header+"Duration,"+duration);
         for(Long r:readlatencies)
             System.err.println(header+"ReadLatency,"+r);
         for(Long w: writelatencies)
