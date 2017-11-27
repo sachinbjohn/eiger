@@ -60,8 +60,8 @@ public class Session implements Serializable
     public final AtomicLong    bytes;
     public final AtomicLong    latency;
     public final ConcurrentLinkedQueue<Long> latencies;
-    public final ConcurrentLinkedQueue<Long> read_latencies;
-    public final ConcurrentLinkedQueue<Long> write_latencies;
+    public final ConcurrentLinkedQueue<Long> readlatencies;
+    public final ConcurrentLinkedQueue<Long> writelatencies;
 
     static
     {
@@ -195,7 +195,7 @@ public class Session implements Serializable
     private int server_index = -1;
     public static ArrayList<ArrayList<ByteBuffer>> generatedKeysByServer;
 
-    private double zipfian_constant = 0.99;
+    private double zipfianConstant = 0.99;
 
     public Session(String[] arguments) throws IllegalArgumentException
     {
@@ -498,8 +498,8 @@ public class Session implements Serializable
                     throw new RuntimeException("Invalid server-index value");
             }
             if(cmd.hasOption("zipfian-constant")) {
-                zipfian_constant = Double.parseDouble(cmd.getOptionValue("zipfian-constant"));
-                if(zipfian_constant < 0 || zipfian_constant >= 1)
+                zipfianConstant = Double.parseDouble(cmd.getOptionValue("zipfian-constant"));
+                if(zipfianConstant < 0 || zipfianConstant >= 1)
                     throw new RuntimeException("Invalid zipfian parameter");
             }
         }
@@ -544,12 +544,8 @@ public class Session implements Serializable
             numDifferentKeys = keys_per_server * num_servers;
             servers_per_txn = keys_per_read;
             assert servers_per_txn <= num_servers;
-            generateLinearKeysForEachServer(num_servers, numDifferentKeys);
-            read_latencies = new ConcurrentLinkedQueue<>();
-            write_latencies = new ConcurrentLinkedQueue<>()
-            ;
-        } else
-            read_latencies = write_latencies = null;
+            dynamicOneServerGenerateKeysForEachServer(num_servers, numDifferentKeys);
+        }
         for (String node : nodes) {
             localServerIPAndPorts.put(node, 9160);
         }
@@ -569,6 +565,8 @@ public class Session implements Serializable
         bytes = new AtomicLong();
         latency = new AtomicLong();
         latencies = new ConcurrentLinkedQueue<Long>();
+        readlatencies = new ConcurrentLinkedQueue<Long>();
+        writelatencies = new ConcurrentLinkedQueue<Long>();
     }
 
     public int getCardinality()
@@ -762,7 +760,7 @@ public class Session implements Serializable
         return server_index;
     }
 
-    public double getZipfianConstant() { return zipfian_constant; }
+    public double getZipfianConstant() { return zipfianConstant; }
 
 
     /**
@@ -874,35 +872,6 @@ public class Session implements Serializable
     {
         int serverKeyCount = generatedKeysByServer.get(serverNum).size();
         return generatedKeysByServer.get(serverNum).get(Stress.randomizer.nextInt(serverKeyCount));
-    }
-
-
-    public void generateLinearKeysForEachServer(int numServers, int totalNumKeys)
-    {
-        int keysPerServer = totalNumKeys/numServers;
-
-        generatedKeysByServer = new ArrayList<ArrayList<ByteBuffer>>(numServers);
-        for (int i = 0; i < numServers; i++)
-        {
-            generatedKeysByServer.add(new ArrayList<ByteBuffer>(keysPerServer));
-        }
-
-        // Assuming we're using the random partitioner, which we are.
-        // We need to generate keys for servers by randomly generating keys
-        // and then matching them to whatever their md5 maps to.
-        boolean allServersFull;
-        Random randomizer = new Random();
-        for(long keynum = 0; keynum < totalNumKeys; ++keynum) {
-            String keyStr = String.format("%0" + (getTotalKeysLength()) + "d", keynum);
-            ByteBuffer key = ByteBuffer.wrap(keyStr.getBytes(UTF_8));
-            double hashedKey = FBUtilities.hashToBigInteger(key).doubleValue();
-
-            //Cassandra's keyspace is [0, 2**127)
-            double keyrangeSize = Math.pow(2, 127) / numServers;
-            int serverIndex = (int) (hashedKey / keyrangeSize);
-            generatedKeysByServer.get(serverIndex).add(key);
-
-        }
     }
 
     private void generateKeysForEachServer(int numServers, int totalNumKeys)

@@ -164,7 +164,6 @@ public class StressAction extends Thread {
     private void printLatencyPercentiles() {
         // Trim away the latencies from the start and end of the trial
         // we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
-
         ArrayDeque<Long> latenciesDeque = new ArrayDeque<Long>();
         latenciesDeque.addAll(client.latencies);
         int trimLen = latenciesDeque.size() / 4;
@@ -176,66 +175,6 @@ public class StressAction extends Thread {
         // Sort the latencies so we can find percentiles
         SortedSet<Long> latenciesSet = new TreeSet<Long>();
         latenciesSet.addAll(latenciesDeque);
-
-        if (client.read_latencies != null && client.write_latencies != null) {
-
-            {
-                //Read
-                ArrayDeque<Long> readlatenciesDeque = new ArrayDeque<Long>();
-                readlatenciesDeque.addAll(client.latencies);
-                int RtrimLen = readlatenciesDeque.size() / 4;
-                for (int ii = 0; ii < RtrimLen; ii++) {
-                    readlatenciesDeque.removeFirst();
-                    readlatenciesDeque.removeLast();
-                }
-                SortedSet<Long> readlatenciesSet = new TreeSet<Long>();
-                readlatenciesSet.addAll(readlatenciesDeque);
-
-
-                Long[] readlatencies = readlatenciesSet.toArray(new Long[0]);
-
-                if (readlatencies.length == 0) {
-                    // We aren't recording latencies for this op type probably
-                    System.err.println("No Read Latencies percentiles to print");
-                    return;
-                }
-                System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-                        percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
-                        percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
-            }
-            {
-                //Write
-                ArrayDeque<Long> writelatenciesDeque = new ArrayDeque<Long>();
-                writelatenciesDeque.addAll(client.latencies);
-                int WtrimLen = writelatenciesDeque.size() / 4;
-                for (int ii = 0; ii < WtrimLen; ii++) {
-                    writelatenciesDeque.removeFirst();
-                    writelatenciesDeque.removeLast();
-                }
-
-
-                SortedSet<Long> writelatenciesSet = new TreeSet<Long>();
-                writelatenciesSet.addAll(writelatenciesDeque);
-
-                Long[] writelatencies = writelatenciesSet.toArray(new Long[0]);
-
-                if (writelatencies.length == 0) {
-                    // We aren't recording latencies for this op type probably
-                    System.err.println("No Write Latencies percentiles to print");
-                    return;
-                }
-
-                System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-                        percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
-                        percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
-            }
-
-//            latenciesSet.addAll(readlatenciesDeque);
-//            latenciesSet.addAll(writelatenciesDeque);
-            return;
-        }
-
-
         Long[] latencies = latenciesSet.toArray(new Long[0]);
 
         if (latencies.length == 0) {
@@ -244,9 +183,62 @@ public class StressAction extends Thread {
             return;
         }
 
-        System.err.println(String.format("Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+        System.err.println(String.format("Overall Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
                 percentile(latencies, 50), percentile(latencies, 90), percentile(latencies, 95),
                 percentile(latencies, 99), percentile(latencies, 99.9)));
+
+
+        // RO6 read latency
+        ArrayDeque<Long> readlatenciesDeque = new ArrayDeque<Long>();
+        readlatenciesDeque.addAll(client.readlatencies);
+        int readtrimLen = readlatenciesDeque.size() / 4;
+        for (int ii = 0; ii < readtrimLen; ii++) {
+            readlatenciesDeque.removeFirst();
+            readlatenciesDeque.removeLast();
+        }
+
+        // Sort the latencies so we can find percentiles
+        SortedSet<Long> readlatenciesSet = new TreeSet<Long>();
+        readlatenciesSet.addAll(readlatenciesDeque);
+        Long[] readlatencies = readlatenciesSet.toArray(new Long[0]);
+
+        if (readlatencies.length == 0) {
+            // We aren't recording latencies for this op type probably
+            System.err.println("No ReadLatencies percentiles to print");
+            return;
+        }
+
+        System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+                percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
+                percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
+
+        // @Khiem: print out all read latencies
+        //System.err.println(String.format("List of Read Latencies: %s", Arrays.toString(readlatencies)));
+
+
+        //RO6 write latency
+        ArrayDeque<Long> writelatenciesDeque = new ArrayDeque<Long>();
+        writelatenciesDeque.addAll(client.writelatencies);
+        int writetrimLen = writelatenciesDeque.size() / 4;
+        for (int ii = 0; ii < writetrimLen; ii++) {
+            writelatenciesDeque.removeFirst();
+            writelatenciesDeque.removeLast();
+        }
+
+        // Sort the latencies so we can find percentiles
+        SortedSet<Long> writelatenciesSet = new TreeSet<Long>();
+        writelatenciesSet.addAll(writelatenciesDeque);
+        Long[] writelatencies = writelatenciesSet.toArray(new Long[0]);
+
+        if (writelatencies.length == 0) {
+            // We aren't recording latencies for this op type probably
+            System.err.println("No WriteLatencies percentiles to print");
+            return;
+        }
+
+        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
+                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
+                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
     }
 
     /**

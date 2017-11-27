@@ -1,5 +1,6 @@
 *~
 build/
+.idea
 src/gen-java/
 cassandra_var/*/*
 cassandra_var/cassandra_system.*.log
@@ -13,6 +14,7 @@ vicci_scripts/live_nodes
 vicci_scripts/cops_bin_push.tmp
 experiments/dynamic__*
 experiments/dynamic_
+experiments/exp10
 experiments/write_txn
 experiments/facebook
 experiments/progress

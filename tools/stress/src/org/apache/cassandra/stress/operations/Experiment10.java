@@ -147,7 +147,8 @@ public class Experiment10 extends Operation {
         session.bytes.getAndAdd(bytesCount);
         long latencyNano = System.nanoTime() - startNano;
         session.latency.getAndAdd(latencyNano / 1000000);
-        session.read_latencies.add(latencyNano / 1000);
+        session.latencies.add(latencyNano / 1000);
+        session.readlatencies.add(latencyNano / 1000);
 
     }
 
@@ -193,7 +194,8 @@ public class Experiment10 extends Operation {
         session.bytes.getAndAdd(session.getColumnSize());
         long latencyNano = System.nanoTime() - startNano;
         session.latency.getAndAdd(latencyNano / 1000000);
-        session.write_latencies.add(latencyNano / 1000);
+        session.latencies.add(latencyNano / 1000);
+        session.writelatencies.add(latencyNano / 1000);
 
 
     }
