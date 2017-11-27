@@ -60,7 +60,7 @@ public class Experiment10 extends Operation {
 
     private  ByteBuffer getZipfGeneratedKey(int srvIndex) {
 
-        int index = zipfGen.nextValue().intValue();
+        int index = zipfGen.nextInt();
         ArrayList<ByteBuffer> list = session.generatedKeysByServer.get(srvIndex);
         if (index >= list.size())
             return list.get(list.size() - 1);
