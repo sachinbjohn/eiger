@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+
+#Using VICCI confs
 set -u
 set -x
 
@@ -12,8 +14,8 @@ fi
 
 
 nservers=$1
-dcl_config=${nservers}_in_kodiak
-client_config=${nservers}_clients_in_kodiak
+dcl_config=${nservers}_in_vicci
+client_config=${nservers}_clients_in_vicci
 
 cops_dir="$HOME/eiger"
 exp_dir="${cops_dir}/experiments"

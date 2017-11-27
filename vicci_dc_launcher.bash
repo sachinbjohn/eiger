@@ -12,9 +12,12 @@ fi
 
 dcl_config=$1
 wait=wait
-cops_dir=$HOME/eiger
-var_dir=$cops_dir/cassandra_var
 
+
+
+usr_name="$USER"
+cops_dir=$(pwd)
+var_dir=$cops_dir/cassandra_var
 
 num_dcs=$(grep num_dcs $dcl_config | awk -F "=" '{ print $2 }')
 ips=($(grep cassandra_ips $dcl_config | awk -F "=" '{ print $2 }'))
@@ -34,7 +37,7 @@ fi
 
 #clean up all nodes in parallel
 for ip in ${ips[@]}; do
-    (ssh -t -t -o StrictHostKeyChecking=no $ip "\
+    (ssh -t -t -o StrictHostKeyChecking=no ${usr_name}@$ip "\
 ${cops_dir}/kill_all_cassandra.bash;\
 rm ${cops_dir}/*hprof 2> /dev/null;\
 rm ${var_dir}/cassandra*log 2> /dev/null;\
@@ -54,12 +57,13 @@ done
 wait
 unset ip
 
+sleep 10
 set +m
 
 
 #create the topo file, we must eventually write this to conf/cassandra-topology.properties
 #because that location is hardcoded into cassandra
-topo_file=${cops_dir}/conf/vicci/cassandra-topology.properties
+topo_file=$cops_dir/conf/vicci/cassandra-topology.properties
 echo -n "" > $topo_file
 for dc in $(seq 0 $((num_dcs - 1))); do
     for n in $(seq 0 $((nodes_per_dc - 1))); do
@@ -70,7 +74,7 @@ for dc in $(seq 0 $((num_dcs - 1))); do
         echo $local_ip=DC$dc:RAC1 >> $topo_file
     done
 done
-#echo "default=DC0:RAC1" >> $topo_file
+
 unset dc
 unset n
 unset global_node_num
@@ -82,20 +86,19 @@ for dc in $(seq 0 $((num_dcs - 1))); do
 	local_ip=$(echo ${ips[global_node_num]})
         # tokens can't be identical even though we want them to be ... so for now let's get them as close as possible
         token=$(echo "${n}*(2^127)/${nodes_per_dc} + $dc" | bc)
-        # Using tokens for evenly splitting type 4 uuids now
-        #token=$(./uuid_token.py ${dc} ${n} ${nodes_per_dc})
         echo $token" @ "$local_ip
 
         conf_file=${num_dcs}x${nodes_per_dc}_${dc}_${n}.yaml
         log4j_file=log4j-server_${global_node_num}.properties
 
         #create the custom config file for this node
+	var_dir=${cops_dir}/cassandra_var
         sed 's/INITIAL_TOKEN/'$token'/g' conf/cassandra_VICCI_BASE.yaml \
 	    | sed 's/LISTEN_ADDRESS/'$local_ip'/g' \
             | sed 's/RPC_ADDRESS/'$local_ip'/g' \
             | sed 's/SEEDS/'"$seeds"'/g' \
             | sed 's,VAR_DIR,'$var_dir',g' \
-            > ${cops_dir}/conf/vicci/$conf_file
+            > $cops_dir/conf/vicci/$conf_file
         
 	#| sed 's/NODE_NUM/'$global_node_num'/g' \
 
@@ -104,15 +107,15 @@ for dc in $(seq 0 $((num_dcs - 1))); do
         #set -x
 	#copy over conf files
 	(
-	scp -o StrictHostKeyChecking=no ${topo_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no ${cops_dir}/conf/vicci/${conf_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
-	scp -o StrictHostKeyChecking=no ${cops_dir}/conf/vicci/${log4j_file} ${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no ${topo_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no $cops_dir/conf/vicci/${conf_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
+	scp -o StrictHostKeyChecking=no $cops_dir/conf/vicci/${log4j_file} ${usr_name}@${local_ip}:${cops_dir}/conf/ 2>&1 | awk '{ print "'$local_ip': "$0 }'
 
         #put this in ssh commands to modify JVM options
         #export JVM_OPTS="-Xms32M -Xmn64M"
 
 	while [ 1 ]; do
-            ssh_output=$(ssh -o StrictHostKeyChecking=no $local_ip "\
+            ssh_output=$(ssh -o StrictHostKeyChecking=no ${usr_name}@$local_ip "\
 cd ${cops_dir};\
  CASSANDRA_INCLUDE=bin/cassandra.in.sh bin/cassandra -Dcassandra.config=file:///${cops_dir}/conf/${conf_file} -Dlog4j.configuration=${log4j_file} > ${var_dir}/stdout/${dc}_${n}.out;\
 " 2>&1)
@@ -129,6 +132,7 @@ echo "COMMAND@$local_ip = CASSANDRA_INCLUDE=bin/cassandra.in.sh bin/cassandra -D
     done
 done
 
+sleep 3
 
 timeout=60
 if [ "$wait" != "" ]; then
@@ -139,8 +143,8 @@ if [ "$wait" != "" ]; then
     while [ "${normal_nodes}" -ne "${total_nodes}" ]; do
         sleep 5
         echo "COMMAND = CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l"
-        normal_nodes=$(ssh -o StrictHostKeyChecking=no ${ips[0]} \
-	    "CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l")
+        normal_nodes=$(ssh -o StrictHostKeyChecking=no ${usr_name}@${ips[0]} \
+	    "CASSANDRA_INCLUDE=${cops_dir}/bin/cassandra.in.sh ${cops_dir}"'/bin/nodetool -h localhost ring 2>&1 | grep "Normal" | wc -l')
         echo "  "$normal_nodes
 	wait_time=$((wait_time+5))
 	if [[ $wait_time -ge 60 ]]; then
