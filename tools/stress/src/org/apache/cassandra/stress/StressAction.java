@@ -144,14 +144,14 @@ public class StressAction extends Thread {
                 long byteDelta = byteCount - oldByteCount;
                 double latencyDelta = latency - oldLatency;
 
-
-                long currentTimeInSeconds = (System.currentTimeMillis() - testStartTime) / 1000;
+                client.exptDurationMs = (System.currentTimeMillis() - testStartTime);
+                long currentTimeInSeconds =  client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
                 output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
-        client.exptDurationMs = (System.currentTimeMillis() - testStartTime);
+
         output.println("Duration = "+client.exptDurationMs);
         // marking an end of the output to the client
         output.println("END");
