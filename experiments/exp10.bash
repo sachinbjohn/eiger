@@ -244,16 +244,16 @@ total_keys=$((keys_per_server*nservers))
 run_time=60
 for trial in 1
 do
-    for value_size in 8 #128 512
+    for value_size in 8 128 512
     do
         internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
-        for keys_per_read in 2 #4 16
+        for keys_per_read in 2 4 16
         do
-            for write_frac in 0.01 #0.05 0.1
+            for write_frac in 0.01 0.05 0.1
             do
-                for zipf_c in 0.99 #0 0.8 0.99
+                for zipf_c in 0 0.8 0.99
                 do
-                    for numT in 32
+                    for numT in 1 2 4 8 12 16 20 24 28 32
                     do
                         run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
                         $kill_all_cmd
