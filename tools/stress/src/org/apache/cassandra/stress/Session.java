@@ -499,7 +499,7 @@ public class Session implements Serializable
             }
             if(cmd.hasOption("zipfian-constant")) {
                 zipfian_constant = Double.parseDouble(cmd.getOptionValue("zipfian-constant"));
-                if(zipfian_constant < 0 || zipfian_constant > 1)
+                if(zipfian_constant < 0 || zipfian_constant >= 1)
                     throw new RuntimeException("Invalid zipfian parameter");
             }
         }

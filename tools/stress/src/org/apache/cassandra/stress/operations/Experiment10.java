@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.yahoo.ycsb.generator.ZipfianGenerator;
 
 public class Experiment10 extends Operation {
 
