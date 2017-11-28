@@ -283,8 +283,10 @@ public abstract class Operation
     protected String getExceptionMessage(Exception e)
     {
         String className = e.getClass().getSimpleName();
+        Throwable cause = e.getCause();
+        String causeEr = cause == null ? "" : cause.getMessage() + "@" + Arrays.toString(cause.getStackTrace());
         String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : e.getMessage() + "::" +Arrays.toString(e.getStackTrace());
-        return (message == null) ? "(" + className + ")" : String.format("(%s): %s", className, message);
+        return (message == null) ? "(" + className + ")" : String.format("(%s): %s caused by ", className, message, cause);
     }
 
     protected void error(String message) throws IOException
