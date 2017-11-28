@@ -238,7 +238,7 @@ gather_results() {
 }
 
 
-internal_cluster_start_cmd $cops_dir
+
 keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
@@ -246,7 +246,7 @@ for trial in 1
 do
     for value_size in 8 128 512
     do
-        internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
+
         for keys_per_read in 2 4 16
         do
             for write_frac in 0.01 0.05 0.1
@@ -255,6 +255,8 @@ do
                 do
                     for numT in 1 2 4 8 12 16 20 24 28 32
                     do
+                        internal_cluster_start_cmd $cops_dir
+                        internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
                         run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
                         $kill_all_cmd
                         gather_results
