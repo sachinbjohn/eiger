@@ -19,6 +19,7 @@ package org.apache.cassandra.stress;
 
 import java.io.PrintStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
@@ -255,18 +256,38 @@ public class StressAction extends Thread {
         int numWrites = client.writelatencies.size();
         long duration = client.exptDurationMs;
 
-        String header = String.format("Eiger,%d,%d,%d,%d,%f,%f,%d,Client%d,",client.getKeys_per_server(),client.getNum_servers(),client.getColumnSize(),client.getKeys_per_read(),client.getWrite_fraction(),client.getZipfianConstant(),client.getThreads(),client.stressIndex);
-        System.err.println(header+"NumOps,"+numOps);
-        System.err.println(header+"NumKeys,"+numKeys);
-        System.err.println(header+"NumColumns,"+numColumns);
-        System.err.println(header+"NumBytes,"+numBytes);
-        System.err.println(header+"NumReads,"+numReads);
-        System.err.println(header+"NumWrites,"+numWrites);
-        System.err.println(header+"Duration,"+duration);
-        for(Long r:readlatencies)
-            System.err.println(header+"ReadLatency,"+r);
-        for(Long w: writelatencies)
-            System.err.println(header+"WriteLatency,"+w);
+        ArrayList<String> outputs = new ArrayList<>();
+        outputs.add("Eiger");
+        outputs.add(String.valueOf(client.getKeys_per_server()));
+        outputs.add(String.valueOf(client.getNum_servers()));
+        outputs.add(String.valueOf(client.getColumnSize()));
+        outputs.add(String.valueOf(client.getKeys_per_read()));
+        outputs.add(String.valueOf(client.getWrite_fraction()));
+        outputs.add(String.valueOf(client.getZipfianConstant()));
+        outputs.add(String.valueOf(client.getThreads()));
+        outputs.add("Client"+client.stressIndex);
+
+
+        outputs.add(String.valueOf(numOps));
+        outputs.add(String.valueOf(numKeys));
+        outputs.add(String.valueOf(numColumns));
+        outputs.add(String.valueOf(numBytes));
+        outputs.add(String.valueOf(numReads));
+        outputs.add(String.valueOf(numWrites));
+        outputs.add(String.valueOf(duration));
+
+        outputs.add(String.valueOf(mean(readlatencies)));
+        outputs.add(String.valueOf(percentile(readlatencies,50)));
+        outputs.add(String.valueOf(percentile(readlatencies,90)));
+        outputs.add(String.valueOf(percentile(readlatencies,99)));
+
+        outputs.add(String.valueOf(mean(writelatencies)));
+        outputs.add(String.valueOf(percentile(writelatencies,50)));
+        outputs.add(String.valueOf(percentile(writelatencies,90)));
+        outputs.add(String.valueOf(percentile(writelatencies,99)));
+
+        System.err.println(String.join(",",outputs));
+
     }
 
     /**
