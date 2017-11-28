@@ -256,8 +256,9 @@ public class StressAction extends Thread {
         int numWrites = client.writelatencies.size();
         long duration = client.exptDurationMs;
 
+        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
         ArrayList<String> outputs = new ArrayList<>();
-        outputs.add("Eiger");
+        outputs.add("COPS-SNOW");
         outputs.add(String.valueOf(client.getKeys_per_server()));
         outputs.add(String.valueOf(client.getNum_servers()));
         outputs.add(String.valueOf(client.getColumnSize()));
@@ -267,7 +268,7 @@ public class StressAction extends Thread {
         outputs.add(String.valueOf(client.getThreads()));
         outputs.add("Client"+client.stressIndex);
 
-
+        //NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput
         outputs.add(String.valueOf(numOps));
         outputs.add(String.valueOf(numKeys));
         outputs.add(String.valueOf(numColumns));
@@ -275,12 +276,15 @@ public class StressAction extends Thread {
         outputs.add(String.valueOf(numReads));
         outputs.add(String.valueOf(numWrites));
         outputs.add(String.valueOf(duration));
+        outputs.add(String.valueOf(numOps*1000/duration));
 
+        //Ravg,R50,R90,R99
         outputs.add(String.valueOf(mean(readlatencies)));
         outputs.add(String.valueOf(percentile(readlatencies,50)));
         outputs.add(String.valueOf(percentile(readlatencies,90)));
         outputs.add(String.valueOf(percentile(readlatencies,99)));
 
+        //Wavg,W50,W90,W99
         outputs.add(String.valueOf(mean(writelatencies)));
         outputs.add(String.valueOf(percentile(writelatencies,50)));
         outputs.add(String.valueOf(percentile(writelatencies,90)));
