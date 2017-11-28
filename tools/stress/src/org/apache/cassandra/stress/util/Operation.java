@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -282,7 +283,7 @@ public abstract class Operation
     protected String getExceptionMessage(Exception e)
     {
         String className = e.getClass().getSimpleName();
-        String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : e.getMessage();
+        String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : Arrays.toString(e.getStackTrace());
         return (message == null) ? "(" + className + ")" : String.format("(%s): %s", className, message);
     }
 

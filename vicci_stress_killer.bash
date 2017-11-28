@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Kills cassandra on all nodes mentioned in the dcl_config_file
+# Kills stress on all nodes mentioned in the dcl_config_file
 #
 
 set -u
@@ -20,7 +20,7 @@ ips=($(echo "echo ${ips[@]}" | bash))
 #kill in parallel
 set -m #need monitor mode to fg processes
 for ip in ${ips[@]}; do
-    ssh -t -t -o StrictHostKeyChecking=no ${usr_name}@$ip "${cops_dir}/kill_all_cassandra.bash" &
+    ssh -t -t -o StrictHostKeyChecking=no ${usr_name}@$ip "${cops_dir}/kill_stress_vicci.bash" &
 done
 
 for ip in ${ips[@]}; do
