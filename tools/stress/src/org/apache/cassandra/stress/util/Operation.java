@@ -283,7 +283,7 @@ public abstract class Operation
     protected String getExceptionMessage(Exception e)
     {
         String className = e.getClass().getSimpleName();
-        String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : Arrays.toString(e.getStackTrace());
+        String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : e.getMessage() + "::" +Arrays.toString(e.getStackTrace());
         return (message == null) ? "(" + className + ")" : String.format("(%s): %s", className, message);
     }
 
