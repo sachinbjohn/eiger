@@ -99,7 +99,7 @@ internal_populate_cluster() {
         first_dc_servers_csv=$(echo ${servers_by_dc[0]} | sed 's/ /,/g')
 
         # set up a killall for stress in case it hangs
-        (sleep 180; killall stress) &
+        (sleep 60; killall stress) &
         killall_jck_pid=$!
         ${src_dir}/tools/stress/bin/stress --nodes=$first_dc_servers_csv --just-create-keyspace --replication-strategy=NetworkTopologyStrategy --strategy-properties=$strategy_properties
         kill $killall_jck_pid
@@ -110,7 +110,7 @@ internal_populate_cluster() {
     populate_attempts=0
     while [ 1 ]; do
 
-        KILLALL_SSH_TIME=300
+        KILLALL_SSH_TIME=90
         MAX_ATTEMPTS=10
         (sleep $KILLALL_SSH_TIME; killall ssh) &
         killall_ssh_pid=$!
@@ -241,16 +241,16 @@ gather_results() {
 keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
-for trial in 1
+for trial in 1 2 3 4 5
 do
-    for value_size in 8 #128 512
+    for value_size in 8 128 512
     do
 
-        for keys_per_read in 2 #4 16
+        for keys_per_read in 2 4 16
         do
-            for write_frac in 0.05 #0.01 0.05 0.1
+            for write_frac in 0.01 0.05 0.1
             do
-                for zipf_c in 0.99 #0.8 0.99
+                for zipf_c in 0.0 0.8 0.99
                 do
                     for numT in 1 4 8 12 16 24 32
                     do
