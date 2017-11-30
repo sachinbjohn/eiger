@@ -290,8 +290,9 @@ public class ClientLibrary {
             firstRoundCallbacks.add(callback);
 
             //if (logger.isTraceEnabled()) { logger.trace("round 1: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-            asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
-
+            synchronized (asyncClient) {
+                asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
+            }
             //testing purposes only
             if (firstIteration) {
                 if (afterFirstReadWriteHook != null) {
@@ -393,8 +394,9 @@ public class ClientLibrary {
                 secondRoundCallbacks.add(callback);
 
                 //if (logger.isTraceEnabled()) { logger.trace("round 2: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-
-                asyncClient.multiget_slice_by_time(keysForThisClient, column_parent, predicate, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
+                synchronized (asyncClient) {
+                    asyncClient.multiget_slice_by_time(keysForThisClient, column_parent, predicate, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
+                }
             }
 
             //Gather second round responses
@@ -470,7 +472,9 @@ public class ClientLibrary {
             firstRoundCallbacks.add(callback);
 
             //if (logger.isTraceEnabled()) { logger.trace("round 1: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-            asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
+            synchronized (asyncClient) {
+                asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
+            }
         }
 
         //Gather responses, track both max_evt and min_lvt
@@ -522,8 +526,9 @@ public class ClientLibrary {
                 secondRoundCallbacks.add(callback);
 
                 //if (logger.isTraceEnabled()) { logger.trace("round 2: get " + printKeys(keysForThisClient) + " from " + asyncClient); }
-
-                asyncClient.multiget_slice_by_time(keysForThisClient, column_parent, predicate, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
+                synchronized (asyncClient) {
+                    asyncClient.multiget_slice_by_time(keysForThisClient, column_parent, predicate, consistencyLevel, chosenTime, LamportClock.sendTimestamp(), callback);
+                }
             }
 
             //Gather second round responses
@@ -578,8 +583,9 @@ public class ClientLibrary {
 
             BlockingQueueCallback<multiget_slice_call> callback = new BlockingQueueCallback<multiget_slice_call>();
             callbacks.add(callback);
-
-            asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
+            synchronized (asyncClient) {
+                asyncClient.multiget_slice(keysForThisClient, column_parent, predicate, consistencyLevel, LamportClock.sendTimestamp(), callback);
+            }
         }
 
         //Gather responses
@@ -1224,7 +1230,9 @@ public class ClientLibrary {
 
             BlockingQueueCallback<batch_mutate_call> callback = new BlockingQueueCallback<batch_mutate_call>();
             callbacks.add(callback);
-            asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp(), callback);
+            synchronized (asyncClient) {
+                asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp(), callback);
+            }
         }
 
         clientContext.clearDeps();

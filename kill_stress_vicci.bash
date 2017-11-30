@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -u
-prcs=$(ps x | grep org.apache.cassandra.stress.Stress)
+prcs=$(ps x | grep org.apache.cassandra.stress.Stress | grep -Eiv 'grep')
 pids=$(echo $prcs | awk '{ print $1 }')
 for pid in $pids ; do
     echo "Killing stress $prcs"

@@ -72,7 +72,7 @@ public class CassandraServer implements Cassandra.Iface
     private static Logger logger = LoggerFactory.getLogger(CassandraServer.class);
 
     private final static int COUNT_PAGE_SIZE = 1024;
-
+    private static int countWrites= 0;
     // thread local state containing session information
     public final ThreadLocal<ClientState> clientState = new ThreadLocal<ClientState>()
     {
@@ -736,7 +736,8 @@ public class CassandraServer implements Cassandra.Iface
 //        if (logger.isTraceEnabled()) {
 //            logger.error("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
         long sts = LamportClock.sendTimestamp();
-//        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
+        if(++countWrites % 50000 == 0)
+            logger.error("batch_mutate recv ="+lts+"  send = "+sts);
         return new BatchMutateResult(new_deps, sts);
     }
 
