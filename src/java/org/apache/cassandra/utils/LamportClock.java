@@ -24,7 +24,7 @@ public class LamportClock {
 
     private static AtomicLong logicalTime = new AtomicLong();
     private static Short localId = null;
-
+    private static boolean firstTime = true;
     private LamportClock() {
         //don't instantiate me
     }
@@ -59,8 +59,14 @@ public class LamportClock {
             return;
         }
 
+
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
+        if(firstTime) {
+            firstTime = false;
+            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
+            logger.error("Clock updated first time  from "+ localTime + " to " + updateTime + "called by "+stack);
+        }
         if(updateTime/localTime > 10000) {
             String stack = Arrays.toString(Thread.currentThread().getStackTrace());
             logger.error("Clock updated from " + localTime + " to " + updateTime + "called by "+stack);

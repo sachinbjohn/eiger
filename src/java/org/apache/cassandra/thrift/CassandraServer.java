@@ -735,8 +735,9 @@ public class CassandraServer implements Cassandra.Iface
         Set<Dep> new_deps = internal_batch_mutate(mutation_map, consistency_level, deps);
 //        if (logger.isTraceEnabled()) {
 //            logger.error("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
-
-        return new BatchMutateResult(new_deps, LamportClock.sendTimestamp());
+        long sts = LamportClock.sendTimestamp();
+        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
+        return new BatchMutateResult(new_deps, sts);
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)
