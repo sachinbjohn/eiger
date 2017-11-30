@@ -1,5 +1,6 @@
 package org.apache.cassandra.utils;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -35,14 +36,14 @@ public class LamportClock {
      */
     public static long getVersion() {
         long localTime = logicalTime.incrementAndGet();
-        long version = (localTime << 5) + localId.shortValue();
+        long version = (localTime << 16) + localId.shortValue();
         //logger.debug("getVersion {} = {} << 16 + {}", new Object[]{version, localTime, localId.shortValue()});
         return version;
     }
 
     //Should only be used for sanity checking
     public static long currentVersion() {
-        return (logicalTime.get() << 5) + localId.shortValue();
+        return (logicalTime.get() << 16) + localId.shortValue();
     }
 
 
@@ -60,8 +61,10 @@ public class LamportClock {
 
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
-        if(updateTime/localTime > 10)
-            logger.error("Clock updated from "+localTime +" to "+updateTime);
+        if(updateTime/localTime > 10000) {
+            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
+            logger.error("Clock updated from " + localTime + " to " + updateTime + "called by "+stack);
+        }
         long resultTime;
         if (timeDiff < 0) {
             resultTime = logicalTime.incrementAndGet();
