@@ -110,7 +110,7 @@ internal_populate_cluster() {
     populate_attempts=0
     while [ 1 ]; do
 
-        KILLALL_SSH_TIME=90
+        KILLALL_SSH_TIME=300
         MAX_ATTEMPTS=10
         (sleep $KILLALL_SSH_TIME; killall ssh) &
         killall_ssh_pid=$!

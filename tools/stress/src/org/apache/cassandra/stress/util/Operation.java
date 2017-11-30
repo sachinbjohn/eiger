@@ -94,8 +94,6 @@ public abstract class Operation
             int sumReminder = session.getColumnSize() % hash.length();
 
             String value = new StringBuilder(multiplyString(hash, times)).append(hash.substring(0, sumReminder)).toString();
-            if(i < 5)
-                System.err.println("Value size = "+value.length());
             values.add(ByteBuffer.wrap(value.getBytes()));
         }
 
