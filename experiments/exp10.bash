@@ -67,7 +67,12 @@ echo ${clients_by_dc[@]}
 kill_all_cmd="${cops_dir}/vicci_cassandra_killer.bash ${cops_dir}/vicci_dcl_config/${dcl_config}"
 stress_killer="${cops_dir}/kill_stress_vicci.bash"
 
+cleanup() {
+echo "Killing everything"
+${cops_dir}/kill_all.bash $nservers
+}
 
+trap cleanup EXIT
 #get cluster up an running
 internal_cluster_start_cmd() {
     cur_dir=$PWD
@@ -110,7 +115,7 @@ internal_populate_cluster() {
     populate_attempts=0
     while [ 1 ]; do
 
-        KILLALL_SSH_TIME=300
+        KILLALL_SSH_TIME=400
         MAX_ATTEMPTS=10
         (sleep $KILLALL_SSH_TIME; killall ssh) &
         killall_ssh_pid=$!
