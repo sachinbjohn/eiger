@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class LamportClock {
-    //private static Logger logger = LoggerFactory.getLogger(LamportClock.class);
+    private static Logger logger = LoggerFactory.getLogger(LamportClock.class);
 
     //NO_CLOCK_TICK should only be used when calling function *locally* on the node
     public static final long NO_CLOCK_TICK = -1;
@@ -60,7 +60,8 @@ public class LamportClock {
 
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
-
+        if(updateTime/localTime > 10)
+            logger.fatal("Clock updated from "+localTime +" to "+updateTime);
         long resultTime;
         if (timeDiff < 0) {
             resultTime = logicalTime.incrementAndGet();
