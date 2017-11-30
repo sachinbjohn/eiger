@@ -3,6 +3,7 @@
 set -u
 
 for pid in $(ps x | grep org.apache.cassandra.stress.Stress | awk '{ print $1 }'); do
+    echo "Killing stress $pid"
     kill $pid
 done
 

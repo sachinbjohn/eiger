@@ -105,7 +105,7 @@ internal_populate_cluster() {
         kill $killall_jck_pid
         sleep 5
     done
-
+    sleep 10
 
     populate_attempts=0
     while [ 1 ]; do
@@ -131,7 +131,7 @@ internal_populate_cluster() {
                 #write to ALL so the cluster is populated everywhere
                 ssh $client -o StrictHostKeyChecking=no "\
                     mkdir -p ${output_dir}; \
-                    $stress_killer; sleep 1; \
+                    $stress_killer; sleep 10; \
                     cd ${src_dir}/tools/stress; \
                     bin/stress \
                     --nodes=$first_dc_servers_csv \
@@ -145,6 +145,7 @@ internal_populate_cluster() {
                     --num-keys=$keys_per_client \
                     --stress-index=$cli_index \
                     --stress-count=$num_clients_per_dc \
+                    --threads=32 \
                      > >(tee ${output_dir}/populate.out) \
                     2> >(tee ${output_dir}/populate.err) \
                     " 2>&1 | awk '{ print "'$client': "$0 }' &

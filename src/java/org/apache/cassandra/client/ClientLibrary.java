@@ -358,7 +358,7 @@ public class ClientLibrary {
                 long evt = evtAndLvt.getEarliestValidTime();
                 long lvt = evtAndLvt.getLatestValidTime();
                 if(lvt < evt) {
-                    throw new IllegalStateException("LVT < EVT : evt = "+evt+" lvt = "+lvt+" time="+result.lts+" <<16 = "+(result.lts<<16));
+                    throw new IllegalStateException("LVT < EVT :key="+ByteBufferUtil.string(key)+"  evt = "+evt+" lvt = "+lvt+" time="+result.lts+" <<16 = "+(result.lts<<16));
                 }
                 if (!lvtToKeys.containsKey(evtAndLvt.getLatestValidTime())) {
                     lvtToKeys.put(evtAndLvt.getLatestValidTime(), new LinkedList<ByteBuffer>());
