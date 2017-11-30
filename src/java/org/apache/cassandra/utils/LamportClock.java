@@ -61,7 +61,7 @@ public class LamportClock {
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
         if(updateTime/localTime > 10)
-            logger.fatal("Clock updated from "+localTime +" to "+updateTime);
+            logger.error("Clock updated from "+localTime +" to "+updateTime);
         long resultTime;
         if (timeDiff < 0) {
             resultTime = logicalTime.incrementAndGet();
