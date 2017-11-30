@@ -145,7 +145,6 @@ internal_populate_cluster() {
                     --num-keys=$keys_per_client \
                     --stress-index=$cli_index \
                     --stress-count=$num_clients_per_dc \
-                    --threads=32 \
                      > >(tee ${output_dir}/populate.out) \
                     2> >(tee ${output_dir}/populate.err) \
                     " 2>&1 | awk '{ print "'$client': "$0 }' &
