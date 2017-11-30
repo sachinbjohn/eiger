@@ -731,9 +731,9 @@ public class CassandraServer implements Cassandra.Iface
         logger.debug("batch_mutate");
 
         Set<Dep> new_deps = internal_batch_mutate(mutation_map, consistency_level, deps);
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
-        }
+//        if (logger.isTraceEnabled()) {
+            logger.error("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
+
         return new BatchMutateResult(new_deps, LamportClock.sendTimestamp());
     }
 
