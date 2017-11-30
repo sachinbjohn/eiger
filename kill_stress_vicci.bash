@@ -1,9 +1,10 @@
 #!/bin/bash
 
 set -u
-
-for pid in $(ps x | grep org.apache.cassandra.stress.Stress | awk '{ print $1 }'); do
-    echo "Killing stress $pid"
+prcs=$(ps x | grep org.apache.cassandra.stress.Stress)
+pids=$(echo $prcs | awk '{ print $1 }')
+for pid in $pids ; do
+    echo "Killing stress $prcs"
     kill $pid
 done
 
