@@ -153,7 +153,6 @@ public class StressAction extends Thread {
             }
         }
 
-        output.println("Duration = "+client.exptDurationMs);
         // marking an end of the output to the client
         output.println("END");
     }

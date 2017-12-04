@@ -92,7 +92,6 @@ for dc in $(seq 0 $((num_dcs - 1))); do
         log4j_file=log4j-server_${global_node_num}.properties
 
         #create the custom config file for this node
-	var_dir=${cops_dir}/cassandra_var
         sed 's/INITIAL_TOKEN/'$token'/g' conf/cassandra_VICCI_BASE.yaml \
 	    | sed 's/LISTEN_ADDRESS/'$local_ip'/g' \
             | sed 's/RPC_ADDRESS/'$local_ip'/g' \
