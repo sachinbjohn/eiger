@@ -286,7 +286,7 @@ public abstract class Operation
         Throwable cause = e.getCause();
         String causeEr = cause == null ? "" : cause.getMessage() + "@" + Arrays.toString(cause.getStackTrace());
         String message = (e instanceof InvalidRequestException) ? ((InvalidRequestException) e).getWhy() : e.getMessage() + "::" +Arrays.toString(e.getStackTrace());
-        return (message == null) ? "(" + className + ")" : String.format("(%s): %s caused by ", className, message, cause);
+        return (message == null) ? "(" + className + ")" : String.format("(%s): %s caused by %s ", className, message, cause);
     }
 
     protected void error(String message) throws IOException
