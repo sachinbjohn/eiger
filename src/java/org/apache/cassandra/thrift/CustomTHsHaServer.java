@@ -193,6 +193,7 @@ public class CustomTHsHaServer extends TNonblockingServer
             {
                 SelectionKey key = keyIterator.next();
                 keyIterator.remove();
+                int ready=key.readyOps();
                 if (!key.isValid())
                 {
                     // if invalid cleanup.
@@ -207,7 +208,7 @@ public class CustomTHsHaServer extends TNonblockingServer
                 else if (key.isWritable())
                     handleWrite(key);
                 else
-                    LOGGER.debug("Unexpected state " + key.interestOps());
+                    LOGGER.debug("Unexpected state iOps =" + key.interestOps()+ " readyOps ="+ready+ " class="+key.getClass().getCanonicalName());
             }
             // process the changes which are inserted after completion.
             processInterestChanges();
