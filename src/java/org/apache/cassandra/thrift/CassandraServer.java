@@ -227,7 +227,7 @@ public class CassandraServer implements Cassandra.Iface
             logger.trace("multiget_slice({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, lts, result});
         }
         long sts = LamportClock.sendTimestamp();
-        logger.error("multiget_slice recv = "+lts+"  send = "+sts);
+//        logger.error("multiget_slice recv = "+lts+"  send = "+sts);
         return new MultigetSliceResult(result,sts);
     }
 
