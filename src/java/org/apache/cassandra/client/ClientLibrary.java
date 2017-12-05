@@ -28,6 +28,8 @@ import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This client library provide the extra functionality needed for COPS2.
@@ -42,6 +44,7 @@ import org.apache.thrift.transport.*;
  *
  */
 public class ClientLibrary {
+    private static Logger logger = LoggerFactory.getLogger(CassandraServer.class);
     private final HashMap<InetAddress, Cassandra.Client> addressToClient = new HashMap<InetAddress, Cassandra.Client>();
     private final HashMap<InetAddress, Cassandra.AsyncClient> addressToAsyncClient = new HashMap<InetAddress, Cassandra.AsyncClient>();
 
@@ -1224,12 +1227,20 @@ public class ClientLibrary {
 
             BlockingQueueCallback<batch_mutate_call> callback = new BlockingQueueCallback<batch_mutate_call>();
             callbacks.add(callback);
-                asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), LamportClock.sendTimestamp(), callback);
+            long sts = LamportClock.sendTimestamp();
+            for (ByteBuffer key : mutations.keySet()) {
+                try {
+                    logger.error("batch_mutate key=" + ByteBufferUtil.string(key) + " send=" + sts);
+                } catch (Exception e) {
+                }
+            }
+            asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), sts, callback);
         }
 
         clientContext.clearDeps();
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
+            logger.error("batch_mutate resp="+result.lts);
             LamportClock.updateTime(result.lts);
             clientContext.addDeps(result.deps);
         }
@@ -1238,7 +1249,7 @@ public class ClientLibrary {
     public void transactional_batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
+//        if (logger.isTraceEnabled()) {
         //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
         //}
 

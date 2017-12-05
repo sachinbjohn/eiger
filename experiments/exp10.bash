@@ -67,9 +67,27 @@ echo ${clients_by_dc[@]}
 kill_all_cmd="${cops_dir}/vicci_cassandra_killer.bash ${cops_dir}/vicci_dcl_config/${dcl_config}"
 stress_killer="${cops_dir}/kill_stress_vicci.bash"
 
+
+gather_results() {
+    for dc in 0; do
+        for srv_index in $(seq 0 $((num_servers_per_dc - 1))); do
+            serv_dir=${output_dir}/server/
+            server=$(echo ${servers_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((srv_index+1)) | tail -n 1)
+            rsync -az $server:$cops_dir/cassandra_var/cassandra* ${serv_dir}
+        done
+        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
+            client_dir=${output_dir}/client${cli_index}
+            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
+            rsync -az $client:$output_dir/* ${client_dir}
+        done
+    done
+}
+
+
 cleanup() {
-echo "Killing everything"
-${cops_dir}/kill_all.bash $nservers
+    echo "Killing everything"
+    ${cops_dir}/kill_all.bash $nservers
+    gather_results
 }
 
 trap cleanup EXIT
@@ -154,6 +172,7 @@ bin/stress \
 " 2>&1 | awk '{ print "'$client': "$0 }' &
                 pop_pid=$!
                 pop_pids="$pop_pids $pop_pid"
+            sleep 1
             done
         done
 
@@ -229,18 +248,6 @@ run_exp10() {
     #wait for clients to finish
     wait
 }
-
-gather_results() {
-    for dc in 0; do
-        for cli_index in $(seq 0 $((num_clients_per_dc - 1))); do
-            client_dir=${output_dir}/client${cli_index}
-            client=$(echo ${clients_by_dc[$dc]} | sed 's/ /\n/g' | head -n $((cli_index+1)) | tail -n 1)
-            rsync -az $client:$output_dir/* ${client_dir}
-        done
-    done
-}
-
-
 
 keys_per_server=100
 total_keys=$((keys_per_server*num_servers))
