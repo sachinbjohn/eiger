@@ -666,9 +666,9 @@ public class CassandraServer implements Cassandra.Iface
             //Get the timestamp for the entire row mutation(s) (these are applied atomically in Cassandra 1)
             long opTimestamp = LamportClock.getVersion();
             returnDeps.add(new Dep(key, opTimestamp));
-            try {
-                logger.error("batch_mutate key="+ByteBufferUtil.string(key)+" evt="+opTimestamp);
-            } catch (Exception e) {}
+//            try {
+//                logger.error("batch_mutate key="+ByteBufferUtil.string(key)+" evt="+opTimestamp);
+//            } catch (Exception e) {}
             // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
             // CounterMutation) because it doesn't follow the same code path
             RowMutation rmStandard = null;
@@ -739,7 +739,7 @@ public class CassandraServer implements Cassandra.Iface
             logger.trace("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
         }
         long sts = LamportClock.sendTimestamp();
-        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
+//        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
         return new BatchMutateResult(new_deps, sts);
     }
 

@@ -1228,19 +1228,19 @@ public class ClientLibrary {
             BlockingQueueCallback<batch_mutate_call> callback = new BlockingQueueCallback<batch_mutate_call>();
             callbacks.add(callback);
             long sts = LamportClock.sendTimestamp();
-            for (ByteBuffer key : mutations.keySet()) {
-                try {
-                    logger.error("batch_mutate key=" + ByteBufferUtil.string(key) + " send=" + sts);
-                } catch (Exception e) {
-                }
-            }
+//            for (ByteBuffer key : mutations.keySet()) {
+//                try {
+//                    logger.error("batch_mutate key=" + ByteBufferUtil.string(key) + " send=" + sts);
+//                } catch (Exception e) {
+//                }
+//            }
             asyncClient.batch_mutate(mutations, consistencyLevel, clientContext.getDeps(), sts, callback);
         }
 
         clientContext.clearDeps();
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-            logger.error("batch_mutate resp="+result.lts);
+//            logger.error("batch_mutate resp="+result.lts);
             LamportClock.updateTime(result.lts);
             clientContext.addDeps(result.deps);
         }

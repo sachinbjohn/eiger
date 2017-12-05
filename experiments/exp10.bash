@@ -232,7 +232,7 @@ run_exp10() {
             --num-servers=$num_servers \
             --stress-index=$cli_index \
             --stress-count=$num_clients_per_dc \
-            --num-keys=2000 \
+            --num-keys=20000000 \
             --column-size=$column_size \
             --keys-per-read=$keys_per_read \
             --write-fraction=$write_frac \
@@ -241,7 +241,7 @@ run_exp10() {
              > >(tee ${cli_output_dir}/${data_file_name}) \
             2> ${cli_output_dir}/${data_file_name}.stderr \
             ) &); \
-            sleep $((exp_time + 10)); ${src_dir}/kill_stress_vicci.bash" \
+            sleep $((exp_time + 60)); ${src_dir}/kill_stress_vicci.bash" \
             2>&1 | awk '{ print "'$client': "$0 }' &
         done
     done
@@ -249,7 +249,7 @@ run_exp10() {
     wait
 }
 
-keys_per_server=100
+keys_per_server=1000000
 total_keys=$((keys_per_server*num_servers))
 run_time=60
 for trial in 1 #2 3 4 5
