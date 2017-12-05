@@ -54,12 +54,11 @@ public class LamportClock {
         return newLocalTime;
     }
 
-    public static void updateTime(long updateTime) {
+    public static synchronized void updateTime(long updateTime) {
         if (updateTime == NO_CLOCK_TICK) {
             //logger.debug("updateTimestamp(NO_CLOCK_TICK == {})", updateTime);
             return;
         }
-
 
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
