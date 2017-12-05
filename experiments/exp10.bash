@@ -110,7 +110,6 @@ internal_populate_cluster() {
         kill $killall_jck_pid
         sleep 5
     done
-    sleep 10
 
     populate_attempts=0
     while [ 1 ]; do
@@ -135,26 +134,26 @@ internal_populate_cluster() {
 
                 #write to ALL so the cluster is populated everywhere
                 ssh $client -o StrictHostKeyChecking=no "\
-                    mkdir -p ${output_dir}; \
-                    $stress_killer; sleep 10; \
-                    cd ${src_dir}/tools/stress; \
-                    bin/stress \
-                    --nodes=$first_dc_servers_csv \
-                    --columns=$max_columns \
-                    --column-size=$column_size \
-                    --operation=${insert_cmd} \
-                    --consistency-level=LOCAL_QUORUM \
-                    --replication-strategy=NetworkTopologyStrategy \
-                    --strategy-properties=$strategy_properties \
-                    --num-different-keys=$keys_per_client \
-                    --num-keys=$keys_per_client \
-                    --stress-index=$cli_index \
-                    --stress-count=$num_clients_per_dc \
-                     > >(tee ${output_dir}/populate.out) \
-                    2> >(tee ${output_dir}/populate.err) \
-                    " 2>&1 | awk '{ print "'$client': "$0 }' &
-                                    pop_pid=$!
-                                    pop_pids="$pop_pids $pop_pid"
+mkdir -p ${output_dir}; \
+$stress_killer; sleep 1; \
+cd ${src_dir}/tools/stress; \
+bin/stress \
+--nodes=$first_dc_servers_csv \
+--columns=$max_columns \
+--column-size=$column_size \
+--operation=${insert_cmd} \
+--consistency-level=LOCAL_QUORUM \
+--replication-strategy=NetworkTopologyStrategy \
+--strategy-properties=$strategy_properties \
+--num-different-keys=$keys_per_client \
+--num-keys=$keys_per_client \
+--stress-index=$cli_index \
+--stress-count=$num_clients_per_dc \
+ > >(tee ${output_dir}/populate.out) \
+2> >(tee ${output_dir}/populate.err) \
+" 2>&1 | awk '{ print "'$client': "$0 }' &
+                pop_pid=$!
+                pop_pids="$pop_pids $pop_pid"
             done
         done
 
@@ -214,7 +213,7 @@ run_exp10() {
             --num-servers=$num_servers \
             --stress-index=$cli_index \
             --stress-count=$num_clients_per_dc \
-            --num-keys=20000000 \
+            --num-keys=2000 \
             --column-size=$column_size \
             --keys-per-read=$keys_per_read \
             --write-fraction=$write_frac \
@@ -243,7 +242,7 @@ gather_results() {
 
 
 
-keys_per_server=1000000
+keys_per_server=100
 total_keys=$((keys_per_server*num_servers))
 run_time=60
 for trial in 1 #2 3 4 5

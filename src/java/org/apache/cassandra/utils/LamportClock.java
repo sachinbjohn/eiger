@@ -63,15 +63,15 @@ public class LamportClock {
 
         long localTime = logicalTime.longValue();
         long timeDiff = updateTime - localTime;
-//        if(firstTime) {
-//            firstTime = false;
-//            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
-//            logger.error("Clock updated first time  from "+ localTime + " to " + updateTime + "called by "+stack);
-//        }
-//        if(updateTime/localTime > 10000) {
-//            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
-//            logger.error("Clock updated from " + localTime + " to " + updateTime + "called by "+stack);
-//        }
+        if(firstTime) {
+            firstTime = false;
+            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
+            logger.error("Clock updated first time  from "+ localTime + " to " + updateTime + "called by "+stack);
+        }
+        if(updateTime/localTime > 10000) {
+            String stack = Arrays.toString(Thread.currentThread().getStackTrace());
+            logger.error("Clock updated from " + localTime + " to " + updateTime + "called by "+stack);
+        }
         long resultTime;
         if (timeDiff < 0) {
             resultTime = logicalTime.incrementAndGet();

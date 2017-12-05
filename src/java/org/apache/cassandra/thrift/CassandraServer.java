@@ -226,7 +226,9 @@ public class CassandraServer implements Cassandra.Iface
         if (logger.isTraceEnabled()) {
             logger.trace("multiget_slice({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, lts, result});
         }
-        return new MultigetSliceResult(result, LamportClock.sendTimestamp());
+        long sts = LamportClock.sendTimestamp();
+        logger.error("multiget_slice recv = "+lts+"  send = "+sts);
+        return new MultigetSliceResult(result,sts);
     }
 
 
@@ -664,9 +666,9 @@ public class CassandraServer implements Cassandra.Iface
             //Get the timestamp for the entire row mutation(s) (these are applied atomically in Cassandra 1)
             long opTimestamp = LamportClock.getVersion();
             returnDeps.add(new Dep(key, opTimestamp));
-//            try {
-//                logger.error("batch_mutate key="+ByteBufferUtil.string(key)+" evt="+opTimestamp);
-//            } catch (Exception e) {}
+            try {
+                logger.error("batch_mutate key="+ByteBufferUtil.string(key)+" evt="+opTimestamp);
+            } catch (Exception e) {}
             // We need to separate row mutation for standard cf and counter cf (that will be encapsulated in a
             // CounterMutation) because it doesn't follow the same code path
             RowMutation rmStandard = null;
@@ -736,7 +738,9 @@ public class CassandraServer implements Cassandra.Iface
         if (logger.isTraceEnabled()) {
             logger.trace("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
         }
-        return new BatchMutateResult(new_deps, LamportClock.sendTimestamp());
+        long sts = LamportClock.sendTimestamp();
+        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
+        return new BatchMutateResult(new_deps, sts);
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)
