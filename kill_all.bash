@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 nservers=$1
-dcl_config=vicci_dcl_config/${nservers}_in_vicci
-client_config=vicci_dcl_config/${nservers}_clients_in_vicci
+root=$(dirname $0)
 
-./vicci_stress_killer.bash $client_config
-./vicci_cassandra_killer.bash $dcl_config
+dcl_config=$root/vicci_dcl_config/${nservers}_in_vicci
+client_config=$root/vicci_dcl_config/${nservers}_clients_in_vicci
+
+
+$root/vicci_stress_killer.bash $client_config
+$root/vicci_cassandra_killer.bash $dcl_config

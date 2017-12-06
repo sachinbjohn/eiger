@@ -265,13 +265,13 @@ do
                 do
                     for numT in 32 24 16 12 8 4 1 #4 8 12 16 24 32
                     do
-                        echo "Eiger trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT start" >> ~/progress
+                        echo "Eiger trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT started at $(date)" >> ~/progress
                         internal_cluster_start_cmd $cops_dir
                         internal_populate_cluster $cops_dir INSERTCL $total_keys 1 $value_size 1
                         run_exp10 $keys_per_server $num_servers $value_size $keys_per_read $write_frac $zipf_c $numT $run_time $trial
                         $kill_all_cmd
                         gather_results
-                        echo "Eiger trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT finish" >> ~/progress
+                        echo "Eiger trial=$trial value_size=$value_size write_frac=$write_frac zipf=$zipf_c numT=$numT finished at $(date)" >> ~/progress
                     done
                 done
             done

@@ -168,6 +168,15 @@ public class StressAction extends Thread {
     }
 
     private void printLatencyPercentiles() {
+
+        int numOps = client.operations.get();
+        int numKeys = client.keys.get();
+        int numColumns = client.columnCount.get();
+        long numBytes = client.bytes.get();
+        int numReads = client.readlatencies.size();
+        int numWrites = client.writelatencies.size();
+        long duration = client.exptDurationMs;
+
         // Trim away the latencies from the start and end of the trial
         // we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
         ArrayDeque<Long> latenciesDeque = new ArrayDeque<Long>();
@@ -247,13 +256,7 @@ public class StressAction extends Thread {
 //                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
 
         //Exp,clientX,keysperserv,num_serv,valSize,kperread,wfra,z,numT,#ops,#keys,#columns,#bytes,#read,#write
-        int numOps = client.operations.get();
-        int numKeys = client.keys.get();
-        int numColumns = client.columnCount.get();
-        long numBytes = client.bytes.get();
-        int numReads = client.readlatencies.size();
-        int numWrites = client.writelatencies.size();
-        long duration = client.exptDurationMs;
+
 
         //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
         ArrayList<String> outputs = new ArrayList<>();
