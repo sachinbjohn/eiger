@@ -149,6 +149,7 @@ public class Experiment10 extends Operation {
         session.latency.getAndAdd(latencyNano / 1000000);
         session.latencies.add(latencyNano / 1000);
         session.readlatencies.add(latencyNano / 1000);
+        session.numReads.getAndIncrement();
 
     }
 
@@ -196,7 +197,7 @@ public class Experiment10 extends Operation {
         session.latency.getAndAdd(latencyNano / 1000000);
         session.latencies.add(latencyNano / 1000);
         session.writelatencies.add(latencyNano / 1000);
-
+        session.numWrites.getAndIncrement();
 
     }
 

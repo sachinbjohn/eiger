@@ -59,6 +59,10 @@ public class Session implements Serializable
     public final AtomicInteger columnCount;
     public final AtomicLong    bytes;
     public final AtomicLong    latency;
+    public final AtomicInteger numRound2Txns;
+    public final AtomicInteger numRound2Keys;
+    public final AtomicInteger numReads;
+    public final AtomicInteger numWrites;
     public final ConcurrentLinkedQueue<Long> latencies;
     public final ConcurrentLinkedQueue<Long> readlatencies;
     public final ConcurrentLinkedQueue<Long> writelatencies;
@@ -566,6 +570,10 @@ public class Session implements Serializable
         columnCount = new AtomicInteger();
         bytes = new AtomicLong();
         latency = new AtomicLong();
+        numRound2Txns = new AtomicInteger();
+        numRound2Keys = new AtomicInteger();
+        numReads = new AtomicInteger();
+        numWrites = new AtomicInteger();
         latencies = new ConcurrentLinkedQueue<Long>();
         readlatencies = new ConcurrentLinkedQueue<Long>();
         writelatencies = new ConcurrentLinkedQueue<Long>();

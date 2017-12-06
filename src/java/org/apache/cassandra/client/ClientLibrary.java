@@ -54,13 +54,16 @@ public class ClientLibrary {
     private final RingCache ringCache;
 
     private final Random randomizer = new Random();
-
+    public int numTwoRoundTxns;
+    public int numTwoRoundKeys;
 
     //private final Logger logger = LoggerFactory.getLogger(ClientLibrary.class);
 
     public ClientLibrary(Map<String, Integer> localServerIPAndPorts, String keyspace, ConsistencyLevel consistencyLevel)
     throws Exception
     {
+        numTwoRoundTxns = 0;
+        numTwoRoundKeys = 0;
         // if (logger.isTraceEnabled()) {
         //     logger.trace("ClientLibrary(localServerIPAndPorts = {}, keyspace = {}, consistencyLevel = {})", new Object[]{localServerIPAndPorts, keyspace, consistencyLevel});
         //}
@@ -377,11 +380,13 @@ public class ClientLibrary {
 
         //Execute 2nd round if necessary
         if (overallMinLvt < overallMaxEvt) {
+            numTwoRoundTxns++;
             //get the smallest lvt > maxEvt
             long chosenTime = lvtToKeys.navigableKeySet().higher(overallMaxEvt);
 
             List<ByteBuffer> secondRoundKeys = new LinkedList<ByteBuffer>();
             for (List<ByteBuffer> keyList : lvtToKeys.headMap(chosenTime).values()) {
+                numTwoRoundKeys++;
                 secondRoundKeys.addAll(keyList);
             }
 
