@@ -42,7 +42,7 @@ public class StressAction extends Thread {
     private final ClientContext clientContext;
 
     private volatile boolean stop = false;
-
+    private volatile boolean terminate = false;
     public StressAction(Session session, PrintStream out, ClientContext clientContext) {
         client = session;
         output = out;
@@ -84,7 +84,7 @@ public class StressAction extends Thread {
             consumers[i].start();
 
         // initialization of the values
-        boolean terminate = false;
+        terminate = false;
         latency = byteCount = 0;
         epoch = total = keyCount = columnCount = 0;
 
@@ -95,6 +95,8 @@ public class StressAction extends Thread {
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
+                stopAction();
+                while(!terminate);
                 printLatencyPercentiles();
             }
         }));
