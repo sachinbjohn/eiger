@@ -96,8 +96,6 @@ public class StressAction extends Thread {
             @Override
             public void run() {
                 stopAction();
-                while(!terminate);
-                printLatencyPercentiles();
             }
         }));
 
@@ -154,7 +152,7 @@ public class StressAction extends Thread {
                 output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
-
+        printLatencyPercentiles();
         // marking an end of the output to the client
         output.println("END");
     }
