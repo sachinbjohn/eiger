@@ -96,6 +96,7 @@ public final class Stress
             ClientContext clientContext = new ClientContext();
             new StressAction(session, outStream, clientContext).run();
         }
+        System.exit(0);
     }
 
     /**
