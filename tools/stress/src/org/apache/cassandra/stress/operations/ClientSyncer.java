@@ -48,7 +48,7 @@ public class ClientSyncer extends Operation {
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
         record.put(key, mutationMap);
 
-        boolean success = true;
+        boolean success = false;
         String exceptionMessage = null;
         for (int t = 0; t < session.getRetryTimes(); t++)
         {
