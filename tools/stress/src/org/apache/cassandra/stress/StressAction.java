@@ -62,7 +62,7 @@ public class StressAction extends Thread {
         int threadCount = client.getThreads();
         Consumer[] consumers = new Consumer[threadCount];
 
-        output.println("total,interval_op_rate,interval_key_rate,avg_latency,elapsed_time");
+
 
         int itemsPerThread = client.getKeysPerThread();
         int modulo = client.getNumKeys() % threadCount;
@@ -80,7 +80,7 @@ public class StressAction extends Thread {
         // Wait until all clients are up
         if(client.getOperation() == Stress.Operations.EXP10) {
             try {
-                new ClientSyncer(client, -1).run(client.getClientLibrary());
+                new ClientSyncer(client, -1, output).run(client.getClientLibrary());
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
@@ -97,7 +97,7 @@ public class StressAction extends Thread {
         boolean terminate = false;
         latency = byteCount = 0;
         epoch = total = keyCount = columnCount = 0;
-
+        output.println("total,interval_op_rate,interval_key_rate,avg_latency,elapsed_time");
         int interval = client.getProgressInterval();
         int epochIntervals = client.getProgressInterval() * 10;
         long testStartTime = System.currentTimeMillis();
@@ -113,7 +113,6 @@ public class StressAction extends Thread {
         while (!terminate) {
             if (stop || client.exptDurationMs > client.specifiedExptDurationSeconds * 1000)
             {
-                output.println("Killing producer consumer");
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)

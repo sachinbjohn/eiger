@@ -5,11 +5,10 @@ import org.apache.cassandra.stress.Session;
 import org.apache.cassandra.stress.util.Operation;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.cassandra.utils.ColumnOrSuperColumnHelper;
 import org.apache.cassandra.utils.FBUtilities;
-import org.apache.cassandra.utils.LamportClock;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,11 +16,13 @@ import java.util.List;
 import java.util.Map;
 
 public class ClientSyncer extends Operation {
+    private PrintStream output;
     public int getKeyForClient(int i) {
         return session.getNumDifferentKeys() + i + 10;
     }
-    public ClientSyncer(Session client, int idx) {
+    public ClientSyncer(Session client, int idx, PrintStream out) {
         super(client, idx);
+        output = out;
     }
 
     @Override
@@ -73,7 +74,7 @@ public class ClientSyncer extends Operation {
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
 
-
+        output.println("Client "+session.stressIndex+ " ready. Written key "+rawKey);
         //Wait for all clients to start up
         SlicePredicate nColumnsPredicate = new SlicePredicate().setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER,
                 ByteBufferUtil.EMPTY_BYTE_BUFFER,
@@ -93,13 +94,17 @@ public class ClientSyncer extends Operation {
         for (int t = 0; t < session.getRetryTimes(); ++t) {
             try {
                 columnCount = 0;
+                String missingKeys = "";
                 results = clientLibrary.multiget_slice(keys, parent, nColumnsPredicate);
-                for (List<ColumnOrSuperColumn> result : results.values()) {
-                    columnCount += result.size();
-
+                for (Map.Entry<ByteBuffer,List<ColumnOrSuperColumn>> kvs : results.entrySet()) {
+                    List<ColumnOrSuperColumn> result = kvs.getValue();
+                    int size = result.size();
+                    columnCount += size;
+                    if(size == 0)
+                        missingKeys += ByteBufferUtil.string(kvs.getKey());
                 }
                 success = (columnCount == session.stressCount);
-                System.err.println("Number of clients ready = "+columnCount);
+                output.println("Number of clients ready = "+columnCount+"  Missing ="+missingKeys);
                 if (success)
                     break;
                 Thread.sleep(500);
