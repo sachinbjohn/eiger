@@ -25,7 +25,11 @@ public class ClientSyncer extends Operation {
     }
 
     @Override
+    public void run(Cassandra.Client client) throws IOException {
+        throw new RuntimeException("Experiment10 must be run with COPS client");
+    }
 
+    @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
 
         List<Mutation> mutations = new ArrayList<Mutation>();
