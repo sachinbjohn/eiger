@@ -42,7 +42,6 @@ public class StressAction extends Thread {
     private final ClientContext clientContext;
 
     private volatile boolean stop = false;
-    private volatile boolean terminate = false;
     public StressAction(Session session, PrintStream out, ClientContext clientContext) {
         client = session;
         output = out;
@@ -84,7 +83,7 @@ public class StressAction extends Thread {
             consumers[i].start();
 
         // initialization of the values
-        terminate = false;
+        boolean terminate = false;
         latency = byteCount = 0;
         epoch = total = keyCount = columnCount = 0;
 
@@ -101,7 +100,9 @@ public class StressAction extends Thread {
         }));
 
         while (!terminate) {
-            if (stop) {
+            if (stop)
+            {
+                output.println("Killing producer consumer");
                 producer.stopProducer();
 
                 for (Consumer consumer : consumers)
@@ -146,14 +147,13 @@ public class StressAction extends Thread {
                 long byteDelta = byteCount - oldByteCount;
                 double latencyDelta = latency - oldLatency;
 
-                client.exptDurationMs = (System.currentTimeMillis() - testStartTime);
+                client.exptDurationMs = System.currentTimeMillis() - testStartTime;
                 long currentTimeInSeconds =  client.exptDurationMs / 1000;
                 String formattedDelta = (opDelta > 0) ? Double.toString(latencyDelta / (opDelta * 1000)) : "NaN";
 
                 output.println(String.format("%d,%d,%d,%d,%d,%s,%d", total, opDelta / interval, keyDelta / interval, columnDelta / interval, byteDelta / interval, formattedDelta, currentTimeInSeconds));
             }
         }
-        printLatencyPercentiles();
         // marking an end of the output to the client
         output.println("END");
     }
