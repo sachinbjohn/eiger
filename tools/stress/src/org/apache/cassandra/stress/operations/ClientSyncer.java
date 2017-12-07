@@ -32,21 +32,21 @@ public class ClientSyncer extends Operation {
 
     @Override
     public void run(ClientLibrary clientLibrary) throws IOException {
+        String format = "%0" + session.getTotalKeysLength() + "d";
+        int thisClientKey = getKeyForClient(session.stressIndex);
+        String rawKey = String.format(format, thisClientKey);
+        ByteBuffer key = ByteBufferUtil.bytes(rawKey);
 
         List<Mutation> mutations = new ArrayList<Mutation>();
         Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>();
 
-        Column c = new Column(columnName(0, session.timeUUIDComparator)).setValue(ByteBufferUtil.bytes(1)).setTimestamp(FBUtilities.timestampMicros());
+        Column c = new Column(columnName(0, session.timeUUIDComparator)).setValue(key).setTimestamp(FBUtilities.timestampMicros());
         ColumnOrSuperColumn column = new ColumnOrSuperColumn().setColumn(c);
         mutations.add(new Mutation().setColumn_or_supercolumn(column));
         mutationMap.put("Standard1", mutations);
 
-        int thisClientKey = getKeyForClient(session.stressIndex);
-        String format = "%0" + session.getTotalKeysLength() + "d";
-        String rawKey = String.format(format, thisClientKey);
-
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-        record.put(ByteBufferUtil.bytes(rawKey), mutationMap);
+        record.put(key, mutationMap);
 
         boolean success = true;
         String exceptionMessage = null;
