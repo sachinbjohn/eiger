@@ -95,7 +95,8 @@ public class StressAction extends Thread {
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-                stopAction();
+                stop=true;
+                printLatencyPercentiles();
             }
         }));
 
@@ -168,18 +169,6 @@ public class StressAction extends Thread {
     }
 
     private void printLatencyPercentiles() {
-
-        int numOps = client.operations.get();
-        int numKeys = client.keys.get();
-        int numColumns = client.columnCount.get();
-        long numBytes = client.bytes.get();
-        int numReads = client.readlatencies.size();
-        int numWrites = client.writelatencies.size();
-        long duration = client.exptDurationMs;
-        int num2RoundTxn =client.numRound2Txns.get();
-        int num2RoundKey =client.numRound2Keys.get();
-        int nR = client.numReads.get();
-        int nW = client.numWrites.get();
 
 
         // Trim away the latencies from the start and end of the trial
@@ -264,6 +253,17 @@ public class StressAction extends Thread {
         Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#R,#W
          */
 
+        int numReads = client.readlatencies.size();
+        int numWrites = client.writelatencies.size();
+        int numOps = client.operations.get();
+        int numKeys = client.keys.get();
+        int numColumns = client.columnCount.get();
+        long numBytes = client.bytes.get();
+        long duration = client.exptDurationMs;
+        int num2RoundTxn =client.numRound2Txns.get();
+        int num2RoundKey =client.numRound2Keys.get();
+        int nR = client.numReads.get();
+        int nW = client.numWrites.get();
 
         //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
         ArrayList<String> outputs = new ArrayList<>();
