@@ -91,7 +91,7 @@ public class ClientSyncer extends Operation {
         exceptionMessage = null;
 
 
-        for (int t = 0; t < session.getRetryTimes(); ++t) {
+        for (int t = 0; t < 100; ++t) {
             try {
                 columnCount = 0;
                 String missingKeys = "";
@@ -101,13 +101,13 @@ public class ClientSyncer extends Operation {
                     int size = result.size();
                     columnCount += size;
                     if(size == 0)
-                        missingKeys += ByteBufferUtil.string(kvs.getKey());
+                        missingKeys += ByteBufferUtil.string(kvs.getKey()) + " ";
                 }
                 success = (columnCount == session.stressCount);
                 output.println("Number of clients ready = "+columnCount+"  Missing ="+missingKeys);
                 if (success)
                     break;
-                Thread.sleep(500);
+                Thread.sleep(2000);
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
             }
