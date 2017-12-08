@@ -81,7 +81,7 @@ public class StressAction extends Thread {
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
-                System.exit(-1);
+                //System.exit(-1);
             }
         }
         producer.start();
@@ -249,7 +249,7 @@ public class StressAction extends Thread {
 
         //Lsum, Lavg
         outputs.add(String.valueOf(latency));
-        outputs.add(String.valueOf(latency/numOps));
+        outputs.add(String.valueOf(latency*1000/numOps));
         System.err.println(String.join(",",outputs));
 
     }
