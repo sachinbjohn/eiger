@@ -18,10 +18,7 @@
 package org.apache.cassandra.stress;
 
 import java.io.PrintStream;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
@@ -168,103 +165,35 @@ public class StressAction extends Thread {
         output.println("END");
     }
     private Long mean(Long[] array) {
+        if(array.length == 0)
+            return -1L;
         long sum = 0;
         for(int i = 0; i < array.length; ++i)
             sum += array[i];
         return sum/array.length;
     }
     private Long percentile(Long[] array, double percentile) {
+        if(array.length == 0)
+            return -1L;
         return array[(int) (array.length * (percentile / 100))];
 
     }
 
     private void printLatencyPercentiles() {
 
-
-        // Trim away the latencies from the start and end of the trial
-        // we'll go with 1/4 from each end, as in COPS we did 15 secs off each side of 60
-        ArrayDeque<Long> latenciesDeque = new ArrayDeque<Long>();
-        latenciesDeque.addAll(client.latencies);
-        int trimLen = latenciesDeque.size() / 4;
-        for (int ii = 0; ii < trimLen; ii++) {
-            latenciesDeque.removeFirst();
-            latenciesDeque.removeLast();
-        }
-
-        // Sort the latencies so we can find percentiles
-        SortedSet<Long> latenciesSet = new TreeSet<Long>();
-        latenciesSet.addAll(latenciesDeque);
-        Long[] latencies = latenciesSet.toArray(new Long[0]);
-
-        if (latencies.length == 0) {
-            // We aren't recording latencies for this op type probably
-//            System.err.println("No Latencies percentiles to print");
+        if(client.latencies.size() == 0)  // We aren't recording latencies for this op type probably
             return;
-        }
 
-//        System.err.println(String.format("Overall Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-//                percentile(latencies, 50), percentile(latencies, 90), percentile(latencies, 95),
-//                percentile(latencies, 99), percentile(latencies, 99.9)));
-
-
-        // RO6 read latency
-        ArrayDeque<Long> readlatenciesDeque = new ArrayDeque<Long>();
-        readlatenciesDeque.addAll(client.readlatencies);
-        int readtrimLen = readlatenciesDeque.size() / 4;
-        for (int ii = 0; ii < readtrimLen; ii++) {
-            readlatenciesDeque.removeFirst();
-            readlatenciesDeque.removeLast();
-        }
-
-        // Sort the latencies so we can find percentiles
-        SortedSet<Long> readlatenciesSet = new TreeSet<Long>();
-        readlatenciesSet.addAll(readlatenciesDeque);
-        Long[] readlatencies = readlatenciesSet.toArray(new Long[0]);
-
-        if (readlatencies.length == 0) {
-            // We aren't recording latencies for this op type probably
-//            System.err.println("No ReadLatencies percentiles to print");
-            return;
-        }
-
-//        System.err.println(String.format("Read Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-//                percentile(readlatencies, 50), percentile(readlatencies, 90), percentile(readlatencies, 95),
-//                percentile(readlatencies, 99), percentile(readlatencies, 99.9)));
-
-        // @Khiem: print out all read latencies
-        //System.err.println(String.format("List of Read Latencies: %s", Arrays.toString(readlatencies)));
-
-
-        //RO6 write latency
-        ArrayDeque<Long> writelatenciesDeque = new ArrayDeque<Long>();
-        writelatenciesDeque.addAll(client.writelatencies);
-        int writetrimLen = writelatenciesDeque.size() / 4;
-        for (int ii = 0; ii < writetrimLen; ii++) {
-            writelatenciesDeque.removeFirst();
-            writelatenciesDeque.removeLast();
-        }
-
-        // Sort the latencies so we can find percentiles
-        SortedSet<Long> writelatenciesSet = new TreeSet<Long>();
-        writelatenciesSet.addAll(writelatenciesDeque);
-        Long[] writelatencies = writelatenciesSet.toArray(new Long[0]);
-
-        if (writelatencies.length == 0) {
-            // We aren't recording latencies for this op type probably
-//            System.err.println("No WriteLatencies percentiles to print");
-            return;
-        }
-
-//        System.err.println(String.format("Write Latencies (usecs): 50=%d, 90=%d, 95=%d, 99=%d, 99.9=%d",
-//                percentile(writelatencies, 50), percentile(writelatencies, 90), percentile(writelatencies, 95),
-//                percentile(writelatencies, 99), percentile(writelatencies, 99.9)));
-
+        Long[] readlatencies = client.readlatencies.toArray(new Long[0]);
+        Long[] writelatencies = client.writelatencies.toArray(new Long[0]);
+        Arrays.sort(readlatencies);
+        Arrays.sort(writelatencies);
         /*
         Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client,NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput,Ravg,R50,R90,R99,Wavg,W50,W90,W99,#Tx2R,#K2R,#R,#W
          */
 
-        int numReads = client.readlatencies.size();
-        int numWrites = client.writelatencies.size();
+        int numReads = client.numReads.get();
+        int numWrites = client.numWrites.get();
         int numOps = client.operations.get();
         int numKeys = client.keys.get();
         int numColumns = client.columnCount.get();
@@ -272,8 +201,9 @@ public class StressAction extends Thread {
         long duration = client.exptDurationMs;
         int num2RoundTxn =client.numRound2Txns.get();
         int num2RoundKey =client.numRound2Keys.get();
-        int nR = client.numReads.get();
-        int nW = client.numWrites.get();
+        int nR = readlatencies.length; //aggregated reads
+        int nW = writelatencies.length; //aggregared writes
+        long latency = client.latency.get();
 
         //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
         ArrayList<String> outputs = new ArrayList<>();
@@ -309,12 +239,17 @@ public class StressAction extends Thread {
         outputs.add(String.valueOf(percentile(writelatencies,90)));
         outputs.add(String.valueOf(percentile(writelatencies,99)));
 
-        //#Tx2R,#K2R, #R,#W
+        //#Tx2R,#K2R,
         outputs.add(String.valueOf(num2RoundTxn));
         outputs.add(String.valueOf(num2RoundKey));
+
+        //#aggR,#aggW
         outputs.add(String.valueOf(nR));
         outputs.add(String.valueOf(nW));
 
+        //Lsum, Lavg
+        outputs.add(String.valueOf(latency));
+        outputs.add(String.valueOf(latency/numOps));
         System.err.println(String.join(",",outputs));
 
     }
