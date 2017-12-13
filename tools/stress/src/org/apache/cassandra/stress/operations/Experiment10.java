@@ -140,17 +140,17 @@ public class Experiment10 extends Operation {
                     keys,
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
-
-        session.operations.getAndIncrement();
-        session.keys.getAndAdd(keys.size());
-        session.columnCount.getAndAdd(columnCount);
-        session.bytes.getAndAdd(bytesCount);
-        long latencyNano = System.nanoTime() - startNano;
-        session.latency.getAndAdd(latencyNano / 1000000);
-        session.latencies.add(latencyNano / 1000);
-        session.readlatencies.add(latencyNano / 1000);
-        session.numReads.getAndIncrement();
-
+        if(session.measureStats) {
+            session.operations.getAndIncrement();
+            session.keys.getAndAdd(keys.size());
+            session.columnCount.getAndAdd(columnCount);
+            session.bytes.getAndAdd(bytesCount);
+            long latencyNano = System.nanoTime() - startNano;
+            session.latency.getAndAdd(latencyNano / 1000000);
+            session.latencies.add(latencyNano / 1000);
+            session.readlatencies.add(latencyNano / 1000);
+            session.numReads.getAndIncrement();
+        }
     }
 
     public void write(ClientLibrary clientLibrary, int totalServers) throws IOException {
@@ -189,15 +189,17 @@ public class Experiment10 extends Operation {
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")"));
         }
 
-        session.operations.getAndIncrement();
-        session.keys.getAndIncrement();
-        session.columnCount.getAndIncrement();
-        session.bytes.getAndAdd(session.getColumnSize());
-        long latencyNano = System.nanoTime() - startNano;
-        session.latency.getAndAdd(latencyNano / 1000000);
-        session.latencies.add(latencyNano / 1000);
-        session.writelatencies.add(latencyNano / 1000);
-        session.numWrites.getAndIncrement();
+        if(session.measureStats) {
+            session.operations.getAndIncrement();
+            session.keys.getAndIncrement();
+            session.columnCount.getAndIncrement();
+            session.bytes.getAndAdd(session.getColumnSize());
+            long latencyNano = System.nanoTime() - startNano;
+            session.latency.getAndAdd(latencyNano / 1000000);
+            session.latencies.add(latencyNano / 1000);
+            session.writelatencies.add(latencyNano / 1000);
+            session.numWrites.getAndIncrement();
+        }
 
     }
 

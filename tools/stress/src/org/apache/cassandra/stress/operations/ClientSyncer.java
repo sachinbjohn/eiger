@@ -107,7 +107,7 @@ public class ClientSyncer extends Operation {
                 output.println("Number of clients ready = "+columnCount+"  Missing ="+missingKeys);
                 if (success)
                     break;
-                Thread.sleep(2000);
+                Thread.sleep(200);
             } catch (Exception e) {
                 exceptionMessage = getExceptionMessage(e);
             }
