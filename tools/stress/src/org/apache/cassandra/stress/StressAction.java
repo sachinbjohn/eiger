@@ -106,15 +106,17 @@ public class StressAction extends Thread {
                 printLatencyPercentiles();
             }
         }));
-
+        boolean before=true,after=false;
         while (!terminate) {
-            if (!client.measureStats && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
+            if (before && client.exptDurationMs > client.warmupPeriodSeconds * 1000) {
                 output.println("Start stats");
                 client.measureStats = true;
+                before = false;
             }
-            if (client.measureStats && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
+            if (!after && client.exptDurationMs > (client.warmupPeriodSeconds + client.specifiedExptDurationSeconds) * 1000) {
                 output.println("End stats");
                 client.measureStats = false;
+                after = true;
             }
             if (stop || client.exptDurationMs > (client.specifiedExptDurationSeconds+2*client.warmupPeriodSeconds) * 1000)
             {
