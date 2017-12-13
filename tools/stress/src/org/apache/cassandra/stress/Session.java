@@ -148,7 +148,7 @@ public class Session implements Serializable
     private int progressInterval  = 10;
     public int specifiedExptDurationSeconds = 60;
     public volatile boolean measureStats = false;
-    public int warmupPeriodSeconds=15;
+    public int warmupPeriodSeconds=5;
     private int keysPerCall       = 1000;
     private boolean replicateOnWrite = true;
     private boolean ignoreErrors  = false;
