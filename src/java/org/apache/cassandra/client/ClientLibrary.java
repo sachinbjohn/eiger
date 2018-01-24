@@ -6,6 +6,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.RowPosition;
 import org.apache.cassandra.dht.*;
 import org.apache.cassandra.hadoop.ConfigHelper;
@@ -81,9 +82,11 @@ public class ClientLibrary {
             TNonblockingTransport tNonblockingTransport = new TNonblockingSocket(ip, port);
             //TODO: 1 or many clientManagers?!?
             TAsyncClientManager clientManager = new TAsyncClientManager();
-            Cassandra.AsyncClient asyncClient = new Cassandra.AsyncClient(new TBinaryProtocol.Factory(), clientManager, tNonblockingTransport);
+            Cassandra.AsyncClient asyncClient = new Cassandra.AsyncClient(new TBinaryProtocol.Factory(true, true, DatabaseDescriptor.getThriftMaxMessageLength()), clientManager, tNonblockingTransport);
             addressToAsyncClient.put(InetAddress.getByName(ip), asyncClient);
-
+            if(logger.isTraceEnabled()) {
+                logger.trace("IP={}  client={}", new Object[]{ip, asyncClient});
+            }
             // Set the keyspace for both synchronous and asynchronous clients
             client.set_keyspace(keyspace, LamportClock.sendTimestamp());
 
