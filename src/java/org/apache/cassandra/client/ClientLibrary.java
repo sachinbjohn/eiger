@@ -84,9 +84,9 @@ public class ClientLibrary {
             TAsyncClientManager clientManager = new TAsyncClientManager();
             Cassandra.AsyncClient asyncClient = new Cassandra.AsyncClient(new TBinaryProtocol.Factory(true, true, DatabaseDescriptor.getThriftMaxMessageLength()), clientManager, tNonblockingTransport);
             addressToAsyncClient.put(InetAddress.getByName(ip), asyncClient);
-            if(logger.isTraceEnabled()) {
-                logger.trace("IP={}  client={}", new Object[]{ip, asyncClient});
-            }
+            //if(logger.isTraceEnabled()) {
+            //    logger.trace("IP={}  client={}", new Object[]{ip, asyncClient});
+            //}
             // Set the keyspace for both synchronous and asynchronous clients
             client.set_keyspace(keyspace, LamportClock.sendTimestamp());
 
@@ -1194,9 +1194,9 @@ public class ClientLibrary {
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        //if (logger.isTraceEnabled()) {
-        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-        //}
+        if (logger.isTraceEnabled()) {
+            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+        }
 
         //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
         // 0 out all timestamps
