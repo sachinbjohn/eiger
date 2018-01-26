@@ -96,6 +96,9 @@ calculate_heap_sizes()
 #MAX_HEAP_SIZE="4G"
 #HEAP_NEWSIZE="800M"
 
+#MAX_HEAP_SIZE="16G"
+#HEAP_NEWSIZE="2G"
+
 if [ "x$MAX_HEAP_SIZE" = "x" ] && [ "x$HEAP_NEWSIZE" = "x" ]; then
     calculate_heap_sizes
 else
@@ -108,7 +111,6 @@ fi
 # Specifies the default port over which Cassandra will be available for
 # JMX connections.
 JMX_PORT="7199"
-
 
 # Here we create the arguments that will get passed to the jvm when
 # starting cassandra.
@@ -151,6 +153,7 @@ if [ "`uname`" = "Linux" ] ; then
     # be pooled anyway.) Only do so on Linux where it is known to be
     # supported.
     JVM_OPTS="$JVM_OPTS -Xss256k"
+    #JVM_OPTS="$JVM_OPTS -Xss256M"
 fi
 
 # GC tuning options

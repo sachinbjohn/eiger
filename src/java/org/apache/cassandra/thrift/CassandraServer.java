@@ -218,17 +218,22 @@ public class CassandraServer implements Cassandra.Iface
     public MultigetSliceResult multiget_slice(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("multiget_slice");
+        try {
+            LamportClock.updateTime(lts);
+            logger.debug("multiget_slice");
 
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> result = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level);
-        if (logger.isTraceEnabled()) {
-            logger.trace("multiget_slice({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, lts, result});
+            state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
+            Map<ByteBuffer, List<ColumnOrSuperColumn>> result = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level);
+            if (logger.isTraceEnabled()) {
+                logger.trace("multiget_slice({}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, lts, result});
+            }
+            long sts = LamportClock.sendTimestamp();
+            //        logger.error("multiget_slice recv = "+lts+"  send = "+sts);
+            return new MultigetSliceResult(result, sts);
+        } catch(Exception ex) {
+            logger.error("MultigetSlice has error",ex);
+            throw new InvalidRequestException(ex.getLocalizedMessage());
         }
-        long sts = LamportClock.sendTimestamp();
-//        logger.error("multiget_slice recv = "+lts+"  send = "+sts);
-        return new MultigetSliceResult(result,sts);
     }
 
 
@@ -261,49 +266,54 @@ public class CassandraServer implements Cassandra.Iface
     SlicePredicate predicate, ConsistencyLevel consistency_level, long chosen_time, long lts)
     throws InvalidRequestException, UnavailableException, TimedOutException, TException
     {
-        LamportClock.updateTime(lts);
-        logger.debug("multiget_slice_by_time");
+        try {
+            LamportClock.updateTime(lts);
+            logger.debug("multiget_slice_by_time");
 
-        state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
+            state().hasColumnFamilyAccess(column_parent.column_family, Permission.READ);
 
-        //do the multiget but dont convert to thrift so we can still access the previous values
-        ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
-        assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
-        Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
+            //do the multiget but dont convert to thrift so we can still access the previous values
+            ISliceMap iSliceMap = multigetSliceInternal(state().getKeyspace(), keys, column_parent, predicate, consistency_level, false);
+            assert iSliceMap instanceof InternalSliceMap : "thriftified was false, so it should be an internal map";
+            Map<ByteBuffer, Collection<IColumn>> keyToColumnFamily = ((InternalSliceMap) iSliceMap).cassandraMap;
 
-        //select results for each key that were visible at the chosen_time
-        Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-        Set<Long> pendingTransactionIds = new HashSet<Long>();
-        selectChosenResults(keyToColumnFamily, predicate, chosen_time, keyToChosenColumns, pendingTransactionIds);
-
-        if (pendingTransactionIds.size() > 0) {
-            //There are pending transactions, we need to determine if they've happened yet and then compute the real result
-            try {
-                TransactionProxy.checkTransactions(state().getKeyspace(), pendingTransactionIds, chosen_time);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
-            pendingTransactionIds = new HashSet<Long>();
+            //select results for each key that were visible at the chosen_time
+            Map<ByteBuffer, List<ColumnOrSuperColumn>> keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
+            Set<Long> pendingTransactionIds = new HashSet<Long>();
             selectChosenResults(keyToColumnFamily, predicate, chosen_time, keyToChosenColumns, pendingTransactionIds);
-            assert pendingTransactionIds.size() == 0 : "Should have resolved all pending transaction";
-        }
 
-        if (DatabaseDescriptor.isForcedByTimeReadIndirection() && pendingTransactionIds.size() == 0) {
-            logger.trace("Forcing an indirection on a multiget_slice_by_time.");
+            if (pendingTransactionIds.size() > 0) {
+                //There are pending transactions, we need to determine if they've happened yet and then compute the real result
+                try {
+                    TransactionProxy.checkTransactions(state().getKeyspace(), pendingTransactionIds, chosen_time);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
-            try {
-                TransactionProxy.forceCheckTransaction(state().getKeyspace(), chosen_time);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                keyToChosenColumns = new HashMap<ByteBuffer, List<ColumnOrSuperColumn>>();
+                pendingTransactionIds = new HashSet<Long>();
+                selectChosenResults(keyToColumnFamily, predicate, chosen_time, keyToChosenColumns, pendingTransactionIds);
+                assert pendingTransactionIds.size() == 0 : "Should have resolved all pending transaction";
             }
-        }
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("multiget_slice_by_time({}, {}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, chosen_time, lts, keyToChosenColumns});
+            if (DatabaseDescriptor.isForcedByTimeReadIndirection() && pendingTransactionIds.size() == 0) {
+                logger.trace("Forcing an indirection on a multiget_slice_by_time.");
+
+                try {
+                    TransactionProxy.forceCheckTransaction(state().getKeyspace(), chosen_time);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (logger.isTraceEnabled()) {
+                logger.trace("multiget_slice_by_time({}, {}, {}, {}, {}, {}) = {}", new Object[]{ByteBufferUtil.listBytesToHex(keys), column_parent, predicate, consistency_level, chosen_time, lts, keyToChosenColumns});
+            }
+            return new MultigetSliceResult(keyToChosenColumns, LamportClock.sendTimestamp());
+        } catch (Exception ex) {
+            logger.error("MultiGetSliceByTime has error", ex);
+            throw new InvalidRequestException(ex.getLocalizedMessage());
         }
-        return new MultigetSliceResult(keyToChosenColumns, LamportClock.sendTimestamp());
     }
 
     private Map<ByteBuffer, List<ColumnOrSuperColumn>> multigetSliceInternal(String keyspace, List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level)
@@ -728,19 +738,23 @@ public class CassandraServer implements Cassandra.Iface
     }
 
     @Override
-    public BatchMutateResult batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
-    throws InvalidRequestException, UnavailableException, TimedOutException
-    {
-        LamportClock.updateTime(lts);
-        logger.debug("batch_mutate");
+    public BatchMutateResult batch_mutate(Map<ByteBuffer, Map<String, List<Mutation>>> mutation_map, ConsistencyLevel consistency_level, Set<Dep> deps, long lts)
+            throws InvalidRequestException, UnavailableException, TimedOutException {
+        try {
+            LamportClock.updateTime(lts);
+            logger.debug("batch_mutate");
 
-        Set<Dep> new_deps = internal_batch_mutate(mutation_map, consistency_level, deps);
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
+            Set<Dep> new_deps = internal_batch_mutate(mutation_map, consistency_level, deps);
+            if (logger.isTraceEnabled()) {
+                logger.trace("batch_mutate({}, {}, {}, {}) = {}", new Object[]{mutation_map, consistency_level, deps, lts, new_deps});
+            }
+            long sts = LamportClock.sendTimestamp();
+            //        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
+            return new BatchMutateResult(new_deps, sts);
+        } catch (Exception ex) {
+            logger.error("BatchMutate has error", ex);
+            throw new InvalidRequestException(ex.getLocalizedMessage());
         }
-        long sts = LamportClock.sendTimestamp();
-//        logger.error("batch_mutate recv ="+lts+"  send = "+sts);
-        return new BatchMutateResult(new_deps, sts);
     }
 
     private long internal_remove(ByteBuffer key, ColumnPath column_path, long timestamp, ConsistencyLevel consistency_level, Set<Dep> deps, boolean isCommutativeOp)

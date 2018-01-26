@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class ClientLibrary {
-    private static Logger logger = LoggerFactory.getLogger(CassandraServer.class);
+    private static Logger logger = LoggerFactory.getLogger(ClientLibrary.class);
     private final HashMap<InetAddress, Cassandra.Client> addressToClient = new HashMap<InetAddress, Cassandra.Client>();
     private final HashMap<InetAddress, Cassandra.AsyncClient> addressToAsyncClient = new HashMap<InetAddress, Cassandra.AsyncClient>();
 
@@ -57,8 +57,6 @@ public class ClientLibrary {
     private final Random randomizer = new Random();
     public int numTwoRoundTxns;
     public int numTwoRoundKeys;
-
-    //private final Logger logger = LoggerFactory.getLogger(ClientLibrary.class);
 
     public ClientLibrary(Map<String, Integer> localServerIPAndPorts, String keyspace, ConsistencyLevel consistencyLevel)
     throws Exception
@@ -82,7 +80,7 @@ public class ClientLibrary {
             TNonblockingTransport tNonblockingTransport = new TNonblockingSocket(ip, port);
             //TODO: 1 or many clientManagers?!?
             TAsyncClientManager clientManager = new TAsyncClientManager();
-            Cassandra.AsyncClient asyncClient = new Cassandra.AsyncClient(new TBinaryProtocol.Factory(true, true, DatabaseDescriptor.getThriftMaxMessageLength()), clientManager, tNonblockingTransport);
+            Cassandra.AsyncClient asyncClient = new Cassandra.AsyncClient(new TBinaryProtocol.Factory(), clientManager, tNonblockingTransport);
             addressToAsyncClient.put(InetAddress.getByName(ip), asyncClient);
             //if(logger.isTraceEnabled()) {
             //    logger.trace("IP={}  client={}", new Object[]{ip, asyncClient});
@@ -1194,9 +1192,9 @@ public class ClientLibrary {
     public void batch_mutate(Map<ByteBuffer,Map<String,List<Mutation>>> mutation_map)
     throws Exception
     {
-        if (logger.isTraceEnabled()) {
-            logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
-        }
+        //if (logger.isTraceEnabled()) {
+        //    logger.trace("batch_mutate(mutation_map = {})", new Object[]{mutation_map});
+        //}
 
         //mutation_map: key -> columnFamily -> list<mutation>, mutation is a ColumnOrSuperColumn insert or a delete
         // 0 out all timestamps
@@ -1248,7 +1246,6 @@ public class ClientLibrary {
         clientContext.clearDeps();
         for (BlockingQueueCallback<batch_mutate_call> callback : callbacks) {
             BatchMutateResult result = callback.getResponseNoInterruption().getResult();
-//            logger.error("batch_mutate resp="+result.lts);
             LamportClock.updateTime(result.lts);
             clientContext.addDeps(result.deps);
         }
