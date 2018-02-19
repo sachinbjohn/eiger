@@ -152,7 +152,7 @@ public class Experiment10 extends Operation {
                     (exceptionMessage == null) ? "" : "(" + exceptionMessage + ")");
             logger.error(eMsg);
         }
-        if(session.measureStats) {
+        if (session.measureStats) {
             session.operations.getAndIncrement();
             session.keys.getAndAdd(keys.size());
             session.columnCount.getAndAdd(columnCount);
@@ -174,7 +174,13 @@ public class Experiment10 extends Operation {
 
         int srvID = Stress.randomizer.nextInt(totalServers);
 
-        ByteBuffer key = getZipfGeneratedKey(srvID);
+        ByteBuffer key;
+        if (session.globalZipf) {
+            int keyI = zipfGen.nextInt();
+            String keyStr = String.format("%0" + (session.getTotalKeysLength()) + "d", keyI);
+            key = ByteBuffer.wrap(keyStr.getBytes(UTF_8));
+        } else
+            key = getZipfGeneratedKey(srvID);
         record.put(key, getColumnMutationMap(column));
 
         long startNano = System.nanoTime();
