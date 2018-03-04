@@ -327,12 +327,9 @@ public class ThriftConverter
 
         //To simplify this code I'll temporarily add the current versions to previousVersions to get all versions
         //but it must be removed before the function returns
-        NavigableSet<IColumn> allVersions;
-        synchronized (currentlyVisibleColumn) {
-            allVersions = currentlyVisibleColumn.previousVersions();
-            allVersions.add(currentlyVisibleColumn);
-        }
 
+        NavigableSet<IColumn> allVersions = currentlyVisibleColumn.previousVersions();
+        allVersions.add(currentlyVisibleColumn);
         //first pass, find the update PTC and determine the minimumPendingTransactionTIme
         PendingTransactionColumn updatedColumn = null;
         Long minPendingTransactionTime = Long.MAX_VALUE;
