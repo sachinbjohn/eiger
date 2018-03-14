@@ -15,14 +15,16 @@ public class DepCheckCallback implements IAsyncCallback
 
     private final long startTime;
     private int responses = 0;
-    private final Set<Dependency> deps;
+    //private final Set<Dependency> deps;
     private final ICompletable completable;
+    private final int numEP;		    //HL: number of endpoints
 
-    public DepCheckCallback(Set<Dependency> deps, ICompletable completable)
+    public DepCheckCallback(ICompletable completable, int numEP)
     {
-        this.deps = deps;
+        //this.deps = deps;
         this.startTime = System.currentTimeMillis();
         this.completable = completable;
+        this.numEP = numEP;
     }
 
     @Override
@@ -38,11 +40,11 @@ public class DepCheckCallback implements IAsyncCallback
         responses++;
 
         if (logger_.isDebugEnabled()) {
-            logger_.debug("Response " + responses + "/" + deps.size() + " for " + completable);
+            logger_.debug("Response " + responses + "/" + numEP + " for " + completable);
         }
 
-        assert responses > 0 && responses <= deps.size() : responses + "?" + deps.size();
-        if (responses == deps.size()) {
+        assert responses > 0 && responses <= numEP : responses + "?" + numEP;
+        if (responses == numEP) {
             completable.complete();
         }
     }

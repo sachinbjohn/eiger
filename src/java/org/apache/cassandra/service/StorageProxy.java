@@ -1406,22 +1406,30 @@ public class StorageProxy implements StorageProxyMBean
      * @param deps the dependencies we want to check
      * @param completableVerbHandler object with a compete callback to be executed after all dep checks return
      */
-    public static void checkDependencies(String keyspace, ByteBuffer locatorKey, long timestamp, Set<Dependency> deps, ICompletable completable)
-    {
+    public static void checkDependencies(String keyspace, ByteBuffer locatorKey, long timestamp, Set<Dependency> deps, ICompletable completable) {
         if (logger.isDebugEnabled())
             logger.debug("Checking deps for " + completable);
 
         AppliedOperations.addPendingOp(locatorKey, timestamp);
-
         //Send out all dep_checks in parallel
-        DepCheckCallback depCheckCallback = new DepCheckCallback(deps, completable);
+        // use a map to group deps into each endpoint
+        ConcurrentHashMap<InetAddress, ArrayList<Dependency>> GroupedDeps = new ConcurrentHashMap<InetAddress, ArrayList<Dependency>>();
         for (Dependency dep : deps) {
             List<InetAddress> localEndpoints = StorageService.instance.getLocalLiveNaturalEndpoints(keyspace, dep.getLocatorKey());
             assert localEndpoints.size() == 1 : "Assumed for now";
             InetAddress localEndpoint = localEndpoints.get(0);
+            if (GroupedDeps.get(localEndpoint) != null) {
+                GroupedDeps.get(localEndpoint).add(dep);
+            } else {
+                ArrayList<Dependency> depList = new ArrayList<Dependency>();
+                depList.add(dep);
+                GroupedDeps.put(localEndpoint, depList);
+            }
+        }
 
-            //WL TODO: Group dep_checks going to the same node into 1 message, like TransactionProxy.sendTransactionMessages
-            MessagingService.instance().sendRR(new DependencyCheck(dep), localEndpoint, depCheckCallback);
+        DepCheckCallback depCheckCallback = new DepCheckCallback(completable, GroupedDeps.size());
+        for (InetAddress ep : GroupedDeps.keySet()) {
+            MessagingService.instance().sendRR(new DependencyCheck(GroupedDeps.get(ep)), ep, depCheckCallback);
         }
         //DepCheckCallback will gather the responses and then complete the blocked action
     }

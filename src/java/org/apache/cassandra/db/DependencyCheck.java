@@ -6,6 +6,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.IVersionedSerializer;
@@ -25,24 +26,24 @@ public class DependencyCheck implements MessageProducer
         return serializer_;
     }
 
-    private final Dependency dependency;
+    private final ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
     private final InetAddress inquiringNode;
 
-    public DependencyCheck(Dependency dependency)
+    public DependencyCheck(ArrayList<Dependency> dependencies)
     {
-        this.dependency = dependency;
+        this.dependencies.addAll(dependencies);
         this.inquiringNode = DatabaseDescriptor.getListenAddress();
     }
 
-    public DependencyCheck(Dependency dependency, InetAddress inquiringNode)
+    public DependencyCheck(ArrayList<Dependency> dependencies, InetAddress inquiringNode)
     {
-        this.dependency = dependency;
+        this.dependencies.addAll(dependencies);
         this.inquiringNode = inquiringNode;
     }
 
-    public Dependency getDependency()
+    public ArrayList<Dependency> getDependencies()
     {
-        return dependency;
+        return dependencies;
     }
 
     public InetAddress getInquiringNode()
@@ -60,7 +61,11 @@ public class DependencyCheck implements MessageProducer
         @Override
         public void serialize(DependencyCheck depCheck, DataOutput dos, int version) throws IOException
         {
-            Dependency.serializer().serialize(depCheck.getDependency(), dos);
+            int size = depCheck.getDependencies().size();
+            dos.writeInt(size);
+            for (Dependency dep : depCheck.getDependencies()) {
+                Dependency.serializer().serialize(dep, dos);
+            }
             dos.writeInt(depCheck.getInquiringNode().getAddress().length);
             dos.write(depCheck.getInquiringNode().getAddress());
         }
@@ -68,18 +73,28 @@ public class DependencyCheck implements MessageProducer
         @Override
         public DependencyCheck deserialize(DataInput dis, int version) throws IOException
         {
+            int size = dis.readInt();
+            ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
+            for (int i = 0; i < size; ++i) {
             Dependency dependency = Dependency.serializer().deserialize(dis);
+                dependencies.add(dependency);
+            }
             int addrSize = dis.readInt();
             byte[] rawAddr = new byte[addrSize];
             dis.readFully(rawAddr);
             InetAddress addr = InetAddress.getByAddress(rawAddr);
-            return new DependencyCheck(dependency, addr);
+            return new DependencyCheck(dependencies, addr);
         }
 
         @Override
         public long serializedSize(DependencyCheck depCheck, int version)
         {
-            long size = Dependency.serializer().serializedSize(depCheck.getDependency());
+            int numDep = depCheck.getDependencies().size();
+            long size = 0L;
+            for (int i = 0; i < numDep; ++i) {
+                size += Dependency.serializer().serializedSize(depCheck.getDependencies().get(i));
+            }
+            size += DBConstants.intSize;	// for size (num of deps)
             size += DBConstants.intSize;
             size += depCheck.getInquiringNode().getAddress().length;
             return size;

@@ -171,39 +171,37 @@ public class AppliedOperations
         }
     }
 
-    public static synchronized void checkDependency(DependencyCheck depCheck, Message depCheckMessage, String id)
-    {
-        // Don't check dependencies for values written in this DC, we know they've been applied
-        if (VersionUtil.extractDatacenter(depCheck.getDependency().getTimestamp()) == ShortNodeId.getLocalDC()) {
-            return;
-        }
+    public static synchronized void checkDependency(DependencyCheck depCheck, Message depCheckMessage, String id) {
+        // now depcheck has a list of dependencies to check, we iterate through them
+        for (Dependency dep : depCheck.getDependencies()) {
+            // Don't check dependencies for values written in this DC, we know they've been applied
+            if (VersionUtil.extractDatacenter(dep.getTimestamp()) == ShortNodeId.getLocalDC()) {
+                continue;
+            }
 
-        logger.debug("Check dependency: {}, (dcm.lt={})", depCheck.getDependency(), depCheckMessage.getLamportTimestamp());
+            // logger.debug("Check dependency: {}, (dcm.lt={})", dep, depCheckMessage.getLamportTimestamp());
 
-        SortedMap<Long, OpStatus> pendingOps = shortNodeIdToPendingOps.get(VersionUtil.extractShortNodeId(depCheck.getDependency().getTimestamp()));
+            SortedMap<Long, OpStatus> pendingOps = shortNodeIdToPendingOps.get(VersionUtil.extractShortNodeId(dep.getTimestamp()));
 
-        if (pendingOps == null || pendingOps.size() == 0) {
-            //no pendingOps => nothing's been received from that node yet
-            blockDepCheck(depCheck.getDependency().getTimestamp(), depCheckMessage, id);
-        }
-        else if (pendingOps.get(pendingOps.firstKey()) == OpStatus.PENDING) {
-            //first op pending => nothing's been applied yet
-            blockDepCheck(depCheck.getDependency().getTimestamp(), depCheckMessage, id);
-        }
-        else if (depCheck.getDependency().getTimestamp() <= pendingOps.firstKey()) {
-            //firstKey and everything older than it have been applied => respond immediately
-            sendDepCheckReply(depCheckMessage, id);
-        }
-        else if (depCheck.getDependency().getTimestamp() > pendingOps.lastKey()) {
-            //lastKey is the mostly recently received op from this node => hasn't been applied yet
-            blockDepCheck(depCheck.getDependency().getTimestamp(), depCheckMessage, id);
-        }
-        else {
-            OpStatus opStatus = pendingOps.get(depCheck.getDependency().getTimestamp());
-            if (opStatus == null || opStatus == OpStatus.PENDING) {
-                blockDepCheck(depCheck.getDependency().getTimestamp(), depCheckMessage, id);
-            } else {
+            if (pendingOps == null || pendingOps.size() == 0) {
+                //no pendingOps => nothing's been received from that node yet
+                blockDepCheck(dep.getTimestamp(), depCheckMessage, id);
+            } else if (pendingOps.get(pendingOps.firstKey()) == OpStatus.PENDING) {
+                //first op pending => nothing's been applied yet
+                blockDepCheck(dep.getTimestamp(), depCheckMessage, id);
+            } else if (dep.getTimestamp() <= pendingOps.firstKey()) {
+                //firstKey and everything older than it have been applied => respond immediately
                 sendDepCheckReply(depCheckMessage, id);
+            } else if (dep.getTimestamp() > pendingOps.lastKey()) {
+                //lastKey is the mostly recently received op from this node => hasn't been applied yet
+                blockDepCheck(dep.getTimestamp(), depCheckMessage, id);
+            } else {
+                OpStatus opStatus = pendingOps.get(dep.getTimestamp());
+                if (opStatus == null || opStatus == OpStatus.PENDING) {
+                    blockDepCheck(dep.getTimestamp(), depCheckMessage, id);
+                } else {
+                    sendDepCheckReply(depCheckMessage, id);
+                }
             }
         }
     }
