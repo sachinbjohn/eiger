@@ -61,7 +61,12 @@ public class StressAction extends Thread
         if (client.getOperation() == Stress.Operations.INSERT || client.getOperation() == Stress.Operations.COUNTER_ADD || client.getOperation() == Stress.Operations.INSERTCL || client.getOperation() == Stress.Operations.FACEBOOK_POPULATE)
             client.createKeySpaces();
 
-        int threadCount = client.getThreads();
+        int totalThreadsCountPerDC = client.getThreads();
+        int threadCount = totalThreadsCountPerDC/client.stressCount;
+        int remainingThreads = totalThreadsCountPerDC % client.stressCount;
+        if(client.stressIndex < remainingThreads) //if there are n threads remaining, we assign them to clients 0,1,..n.1
+            threadCount += 1;
+        client.localThreads = threadCount;
         Consumer[] consumers = new Consumer[threadCount];
 
 
@@ -219,7 +224,7 @@ public class StressAction extends Thread
         int nW = writelatencies.length; //aggregared writes
         long latency = client.latency.get();
 
-        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,Threads,Client
+        //Expt,Key/Serv,#Serv,ValSize,Key/Read,WriteFrac,Zipf,NumClients,TotalThreads,LocalThreads,Client
         ArrayList<String> outputs = new ArrayList<>();
         outputs.add("Eiger");
         outputs.add(String.valueOf(client.numDCs));
@@ -231,6 +236,7 @@ public class StressAction extends Thread
         outputs.add(String.valueOf(client.getZipfianConstant()));
         outputs.add(String.valueOf(client.stressCount));
         outputs.add(String.valueOf(client.getThreads()));
+        outputs.add(String.valueOf(client.localThreads));
         outputs.add("Client"+client.dcIndex+":"+client.stressIndex);
 
         //NumOps,NumKeys,NumColumns,NumBytes,NUmReads,NumWrites,Duration,Throughput
